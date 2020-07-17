@@ -1,5 +1,6 @@
 import torch
 from torch.autograd import Variable
+import torch.nn.functional as f
 import matplotlib.pyplot as plt
 import cv2
 from datetime import datetime
@@ -23,10 +24,21 @@ class Prediction:
             
         heatmap = self.model.forward(Variable(imgs))
         return heatmap
+
+    def expectation(self, distribution):
+        # TODO
+        distribution = distribution.T
+        width, height = distribution.shape
+        flattened_dist = distribution.ravel()
+        flattened_dist = flattened_dist/flattened_dist.sum()
+        x_indices = np.array([i % width for i in range(width*height)])
+        y_indices = np.array([i // width for i in range(width*height)])
+        mu_hat = [int(np.dot(flattened_dist, x_indices)), int(np.dot(flattened_dist, y_indices))]
+        return mu_hat
     
     def plot(self, img, heatmap, image_id=0):
         print("Running inferences on image: %d"%image_id)
-        h1,h2,h3,h4 = heatmap[0]*255
+        h1,h2,h3,h4 = heatmap[0]
         h1 = cv2.normalize(h1, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
         h2 = cv2.normalize(h2, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
         h3 = cv2.normalize(h3, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
