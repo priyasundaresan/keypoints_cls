@@ -11,17 +11,22 @@ class KeypointsGauss(nn.Module):
 	def __init__(self, num_keypoints, img_height=480, img_width=640):
 		super(KeypointsGauss, self).__init__()
 		self.num_keypoints = num_keypoints
+		self.num_outputs = self.num_keypoints
 		self.img_height = img_height
 		self.img_width = img_width
-		self.fcn = Resnet34_8s(num_classes=num_keypoints)
+		self.resnet = torchvision.models.resnet18()
+		self.conv1by1 = nn.Conv2d(512, self.num_outputs, (1,1))
+		self.resnet = nn.Sequential(*list(self.resnet.children())[:-2])
+		self.conv_transpose = nn.ConvTranspose2d(self.num_outputs, self.num_outputs, kernel_size=32, stride=8)
 		self.sigmoid = torch.nn.Sigmoid()
 	def forward(self, x):
-		#start = time.time()
-		x = self.fcn(x) 
-		x = x.view(x.shape[0], self.num_keypoints, self.img_height*self.img_width)
-		x = F.softmax(x, dim=1).double()
-		#print(time.time() - start)
-		return x
+		x = self.resnet(x) 
+		x = self.conv1by1(x)
+		x = self.conv_transpose(x)
+		output = nn.Upsample(size=(self.img_height, self.img_width), mode='bilinear')(x)
+		heatmaps = self.sigmoid(output[:,:self.num_keypoints, :, :])
+		return heatmaps
+		return heatmaps
 
 if __name__ == '__main__':
 	model = KeypointsGauss(4).cuda()
