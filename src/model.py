@@ -5,19 +5,17 @@ import torch.nn.functional as F
 import time
 import sys
 sys.path.insert(0, '/host/src')
-from resnet_dilated import Resnet34_8s
 
 class KeypointsGauss(nn.Module):
 	def __init__(self, num_keypoints, img_height=480, img_width=640):
 		super(KeypointsGauss, self).__init__()
 		self.num_keypoints = num_keypoints
-		self.num_outputs = self.num_keypoints
 		self.img_height = img_height
 		self.img_width = img_width
 		self.resnet = torchvision.models.resnet18()
-		self.conv1by1 = nn.Conv2d(512, self.num_outputs, (1,1))
+		self.conv1by1 = nn.Conv2d(512, self.num_keypoints, (1,1))
 		self.resnet = nn.Sequential(*list(self.resnet.children())[:-2])
-		self.conv_transpose = nn.ConvTranspose2d(self.num_outputs, self.num_outputs, kernel_size=32, stride=8)
+		self.conv_transpose = nn.ConvTranspose2d(self.num_keypoints, self.num_keypoints, kernel_size=32, stride=8)
 		self.sigmoid = torch.nn.Sigmoid()
 	def forward(self, x):
 		x = self.resnet(x) 
@@ -34,4 +32,3 @@ if __name__ == '__main__':
 	result = model.forward(x)
 	print(x.shape)
 	print(result.shape)
-	
