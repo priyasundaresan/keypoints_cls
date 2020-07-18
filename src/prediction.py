@@ -36,9 +36,10 @@ class Prediction:
         mu_hat = [int(np.dot(flattened_dist, x_indices)), int(np.dot(flattened_dist, y_indices))]
         return mu_hat
     
-    def plot(self, img, heatmap, image_id=0):
+    def plot(self, img, heatmap, cls, cls_to_label, image_id=0):
         print("Running inferences on image: %d"%image_id)
-        h1,h2,h3,h4 = heatmap[0]
+        label = cls_to_label[cls]
+        (h1,h2,h3,h4) = heatmap[0]
         h1 = cv2.normalize(h1, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
         h2 = cv2.normalize(h2, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
         h3 = cv2.normalize(h3, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
@@ -51,4 +52,5 @@ class Prediction:
         res1 = cv2.hconcat([r1,r4]) # endpoints (r1 = right, r4 = left)
         res2 = cv2.hconcat([r2,r3]) # pull, hold (r2 = pull, r3 = hold)
         result = cv2.vconcat([res2,res1])
+        cv2.putText(result, label, (10, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         cv2.imwrite('preds/out%04d.png'%image_id, result)
