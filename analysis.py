@@ -4,7 +4,9 @@ import torch
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from config import *
+#from src.model_kpts import KeypointsGauss
 from src.model import KeypointsGauss
+#from src.dataset_kpts import KeypointsDataset, transform
 from src.dataset import KeypointsDataset, transform
 from src.prediction import Prediction
 from datetime import datetime
@@ -13,7 +15,7 @@ import numpy as np
 
 # model
 keypoints = KeypointsGauss(NUM_KEYPOINTS, img_height=IMG_HEIGHT, img_width=IMG_WIDTH)
-keypoints.load_state_dict(torch.load('checkpoints/undo_reid_term/model_2_1_20.pth'))
+keypoints.load_state_dict(torch.load('checkpoints/undo_reid_term/model_2_1_199.pth'))
 
 # cuda
 use_cuda = torch.cuda.is_available()
@@ -38,5 +40,7 @@ for i, f in enumerate(sorted(os.listdir(image_dir))):
     img_t = img_t.cuda()
     heatmap, cls = prediction.predict(img_t)
     cls = torch.argmax(cls).item()
+    #heatmap = prediction.predict(img_t)
+    #cls = 0
     heatmap = heatmap.detach().cpu().numpy()
     prediction.plot(img, heatmap, cls, classes, image_id=i)

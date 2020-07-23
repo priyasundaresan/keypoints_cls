@@ -1,4 +1,5 @@
 import pickle
+import pprint
 import time
 import os
 import torch
@@ -42,6 +43,8 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
         correct = 0
         seen = 0
         for i_batch, sample_batched in enumerate(train_data):
+            #if i_batch>10:
+            #    break
             optimizer_kpt.zero_grad()
             optimizer_cls.zero_grad()
             cls_loss, kpt_loss, cls_correct = forward(sample_batched, model)
@@ -54,8 +57,8 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
             train_cls_loss += cls_loss.item()
             correct += cls_correct 
             accuracy = 0 if not seen else correct/seen
-            print('[%d, %5d] kpts loss: %.3f, cls_accuracy: %.3f' % \
-	           (epoch + 1, i_batch + 1, kpt_loss.item(), accuracy), end='')
+            print('[%d, %5d] kpts loss: %.3f, cls loss: %.3f, cls_accuracy: %.3f' % \
+	           (epoch + 1, i_batch + 1, kpt_loss.item(), cls_loss.item(), accuracy), end='')
             print('\r', end='')
             seen += 1
         train_kpts_losses.append(train_kpt_loss/i_batch)
@@ -63,6 +66,9 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
         train_losses.append(train_loss/i_batch)
         train_cls_acc.append(accuracy)
         print('train loss:', train_loss/i_batch)
+        print('train kpt loss:', train_kpt_loss/i_batch)
+        print('train cls loss:', train_cls_loss/i_batch)
+        print('train cls_accuracy:', accuracy)
         
         test_loss = 0.0
         test_kpt_loss = 0.0
@@ -70,6 +76,8 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
         correct = 0
         seen = 0
         for i_batch, sample_batched in enumerate(test_data):
+            #if i_batch>10:
+            #    break
             cls_loss, kpt_loss, cls_correct = forward(sample_batched, model)
             correct += cls_correct 
             accuracy = 0 if not seen else correct/seen
@@ -82,6 +90,8 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
         test_losses.append(test_loss/i_batch)
         test_cls_acc.append(accuracy)
         print('test loss:', test_loss/i_batch)
+        print('test kpt loss:', test_kpt_loss/i_batch)
+        print('test cls loss:', test_cls_loss/i_batch)
         print('test cls_accuracy:', accuracy)
         torch.save(keypoints.state_dict(), checkpoint_path + '/model_2_1_' + str(epoch) + '.pth')
 
@@ -93,6 +103,9 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
 		"test_kpt_losses": test_kpts_losses, \
 		"test_cls_losses": test_cls_losses, \
 		"test_cls_accs": test_cls_acc}
+    with open('%s/history.pickle'%checkpoint_path, 'wb') as handle:
+        pickle.dump(history, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    #pprint.pprint(history) # DEBUG
     return history
 
 # dataset
@@ -126,7 +139,7 @@ keypoints = KeypointsGauss(NUM_KEYPOINTS, img_height=IMG_HEIGHT, img_width=IMG_W
 # optimizer
 #optimizer = optim.Adam(keypoints.parameters(), lr=1.0e-4, weight_decay=1.0e-4)
 optimizer_kpt = optim.Adam(keypoints.parameters(), lr=1e-4, weight_decay=1.0e-4)
-optimizer_cls = optim.Adam(keypoints.parameters(), lr=1e-4, weight_decay=1.0e-4)
+optimizer_cls = optim.Adam(keypoints.parameters(), lr=1e-5, weight_decay=1.0e-4)
 
 history = fit(train_data, test_data, keypoints, epochs=epochs, checkpoint_path=save_dir)
 plot_history(history, epochs, save_dir)
