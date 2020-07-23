@@ -23,16 +23,16 @@ def plot_history(history, nb_epoch, log_dir):
     plt.savefig("{}/losses.png".format(log_dir))
     plt.close()
 
-    accuracyNames = ["cls_accs"]
+    accuracyName = "cls_accs"
     plt.style.use("ggplot")
     # loop over the accuracy names
     # plot the loss for both the training and validation data
-    plt.title("Accuracy for {}".format(l))
+    plt.title("Accuracy for {}".format(accuracyName))
     plt.xlabel("Epoch #")
     plt.ylabel("Accuracy")
-    plt.plot(np.arange(0, nb_epoch), history["train_" + l], label=l)
-    plt.plot(np.arange(0, nb_epoch), history["test_" + l], \
-           label="test_" + l)
+    plt.plot(np.arange(0, nb_epoch), history["train_" + accuracyName], label=accuracyName)
+    plt.plot(np.arange(0, nb_epoch), history["test_" + accuracyName], \
+           label="test_" + accuracyName)
     plt.legend()
     # save the accuracies figure
     plt.tight_layout()
