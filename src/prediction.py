@@ -24,7 +24,7 @@ class Prediction:
         heatmap = self.model.forward(Variable(imgs))
         return heatmap
     
-    def plot(self, img, heatmap, image_id=0):
+    def plot(self, img, heatmap, image_id=0, cls=None, classes=None):
         print("Running inferences on image: %d"%image_id)
         all_overlays = []
         for i in range(self.num_keypoints):
@@ -39,4 +39,7 @@ class Prediction:
         result1 = cv2.vconcat(all_overlays[:self.num_keypoints//2])
         result2 = cv2.vconcat(all_overlays[self.num_keypoints//2:])
         result = cv2.hconcat((result1, result2))
+        if cls is not None:
+            label = classes[cls]
+            cv2.putText(result, label, (10, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         cv2.imwrite('preds/out%04d.png'%image_id, result)
