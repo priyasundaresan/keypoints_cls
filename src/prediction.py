@@ -26,17 +26,17 @@ class Prediction:
     
     def plot(self, img, heatmap, image_id=0):
         print("Running inferences on image: %d"%image_id)
-        h1,h2,h3,h4 = heatmap[0]*255
-        h1 = cv2.normalize(h1, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
-        h2 = cv2.normalize(h2, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
-        h3 = cv2.normalize(h3, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
-        h4 = cv2.normalize(h4, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
-        grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        r1 = cv2.addWeighted(grayscale, 0.5, h1, 0.5, 0)
-        r2 = cv2.addWeighted(grayscale, 0.5, h2, 0.5, 0)
-        r3 = cv2.addWeighted(grayscale, 0.5, h3, 0.5, 0)
-        r4 = cv2.addWeighted(grayscale, 0.5, h4, 0.5, 0)
-        res1 = cv2.hconcat([r1,r4]) # endpoints (r1 = right, r4 = left)
-        res2 = cv2.hconcat([r2,r3]) # pull, hold (r2 = pull, r3 = hold)
-        result = cv2.vconcat([res2,res1])
+        all_overlays = []
+        for i in range(self.num_keypoints):
+            h = heatmap[0][i]
+            pred_y, pred_x = np.unravel_index(h.argmax(), h.shape)
+            vis = cv2.normalize(h, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+            vis = np.repeat(vis[:,:,np.newaxis], 3, axis=2)
+            #grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            overlay = cv2.addWeighted(img, 0.3, vis, 0.7, 0)
+            overlay = cv2.circle(overlay, (pred_x,pred_y), 3, (255,50,0), -1)
+            all_overlays.append(overlay)
+        result1 = cv2.vconcat(all_overlays[:self.num_keypoints//2])
+        result2 = cv2.vconcat(all_overlays[self.num_keypoints//2:])
+        result = cv2.hconcat((result1, result2))
         cv2.imwrite('preds/out%04d.png'%image_id, result)
