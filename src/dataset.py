@@ -1,4 +1,5 @@
 import torch
+import random
 import cv2
 import time
 import torch.nn.functional as F
@@ -41,15 +42,18 @@ class KeypointsDataset(Dataset):
 
         self.imgs = []
         self.labels = []
-        for i in range(len(os.listdir(labels_folder))):
-            label = np.load(os.path.join(labels_folder, '%05d.npy'%i))[:-2].reshape(num_keypoints, 2)
-            #label = np.load(os.path.join(labels_folder, '%05d.npy'%i)).reshape(num_keypoints, 2)
+        #for i in range(len(os.listdir(labels_folder))):
+        for i in range(len(os.listdir(img_folder))):
+            #label = np.load(os.path.join(labels_folder, '%05d.npy'%i))[:-2].reshape(num_keypoints, 2)
+            label = np.load(os.path.join(labels_folder, '%05d.npy'%i)).reshape(num_keypoints, 2)
             label[:,0] = np.clip(label[:, 0], 0, self.img_width-1)
             label[:,1] = np.clip(label[:, 1], 0, self.img_height-1)
             self.imgs.append(os.path.join(img_folder, '%05d.jpg'%i))
             self.labels.append(torch.from_numpy(label).cuda())
 
     def __getitem__(self, index):  
+        #if index > 2580:
+        #    index = random.choice(range(2580))
         img = self.transform(Image.open(self.imgs[index]))
         labels = self.labels[index]
         U = labels[:,0]
