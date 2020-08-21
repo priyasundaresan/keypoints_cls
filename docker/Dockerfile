@@ -35,5 +35,7 @@ RUN pip install --upgrade pip && \
 
 RUN apt-get install -y libsm6 libxext6 libxrender-dev
 
+RUN pip install imgaug
+
 WORKDIR /host
 CMD ["/bin/bash"]
