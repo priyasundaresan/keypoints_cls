@@ -6,7 +6,6 @@ from torchvision import transforms
 from torch.utils.data import DataLoader
 from config import *
 from src.model import KeypointsGauss
-#from src.model_multi_headed import KeypointsGauss
 from src.dataset import KeypointsDataset, transform
 from src.prediction import Prediction
 from datetime import datetime
@@ -15,14 +14,9 @@ import numpy as np
 
 # model
 keypoints = KeypointsGauss(NUM_KEYPOINTS, img_height=IMG_HEIGHT, img_width=IMG_WIDTH)
-#keypoints.load_state_dict(torch.load('checkpoints/dr_braid_varied/model_2_1_5_0.0026437892680103254.pth'))
-keypoints.load_state_dict(torch.load('checkpoints/cable_varied/model_2_1_12_0.0023301696316083607.pth'))
-#keypoints.load_state_dict(torch.load('checkpoints/undo_reid_termGAUSS_KPTS_ONLY/model_2_1_4_0.003552900240372758.pth'))
-
-#keypoints.load_state_dict(torch.load('checkpoints/undo_reid_term/model_2_1_13.pth'))
-#keypoints.load_state_dict(torch.load('checkpoints/undo_reid_term/model_2_1_14.pth'))
-#keypoints.load_state_dict(torch.load('checkpoints/undo_reid_term_braid_GAUSS_KPTS_ONLY/model_2_1_4_0.003553322965173738.pth'))
-#keypoints.load_state_dict(torch.load('checkpoints/undo_reid_term_capsule_GAUSS_KPTS_ONLY/model_2_1_4_0.0032973564452098247.pth'))
+#keypoints.load_state_dict(torch.load('checkpoints/dr_cable_clean_flipped_GAUSS_KPTS_ONLY/model_2_1_8_0.0029400087515022246.pth'))
+#keypoints.load_state_dict(torch.load('checkpoints/dr_cable_cycles_GAUSS_KPTS_ONLY/model_2_1_6_0.0029278998840831802.pth'))
+keypoints.load_state_dict(torch.load('checkpoints/dr_cable_cycles_6400_GAUSS_KPTS_ONLY/model_2_1_6_0.0028304938931869726.pth'))
 
 # cuda
 use_cuda = torch.cuda.is_available()
@@ -39,8 +33,10 @@ transform = transform = transforms.Compose([
 #image_dir = 'data/global_cable/images'
 #image_dir = 'data/undo_reid_term_braid/test/images'
 #image_dir = 'data/undo_reid_term_capsule/test/images'
-image_dir = 'data/output'
-#image_dir = 'data/real_braid_1'
+image_dir = 'data/overhead_round_shoelace_resized'
+#image_dir = 'data/overhead_hairtie_resized'
+#image_dir = 'data/overhead_hairtie_random_fabric_resized'
+#image_dir = 'data/overhead_hairtie_random_resized'
 classes = {0: "Undo", 1:"Reidemeister", 2:"Terminate"}
 for i, f in enumerate(sorted(os.listdir(image_dir))):
     img = cv2.imread(os.path.join(image_dir, f))
@@ -52,7 +48,3 @@ for i, f in enumerate(sorted(os.listdir(image_dir))):
     heatmap = heatmap.detach().cpu().numpy()
     prediction.plot(img, heatmap, image_id=i)
  
-    #heatmap, cls = prediction.predict(img_t)
-    #cls = torch.argmax(cls).item()
-    #heatmap = heatmap.detach().cpu().numpy()
-    #prediction.plot(img, heatmap, image_id=i, cls=cls, classes=classes)
