@@ -16,13 +16,16 @@ bceLoss = nn.BCELoss
 os.environ["CUDA_VISIBLE_DEVICES"]="4"
 
 def forward(sample_batched, model):
-    img, gt_gauss = sample_batched
-    img = Variable(img.cuda() if use_cuda else img)
-    pred_gauss = model.forward(img).double()
-    #pred_gauss = pred_gauss.view(pred_gauss.shape[0], 4, 640*480).double()
-    #gt_gauss += 1e-300
-    #loss = F.kl_div(gt_gauss.cuda().log(), pred_gauss, None, None, 'mean')
-    loss = nn.BCELoss()(pred_gauss, gt_gauss)
+    img_t, gt_gauss_t, img_prev, gauss_prev, use_time_loss = sample_batched
+    img_t = Variable(img_t.cuda().double())
+    img_prev = Variable(img_prev.cuda().double())
+    inp = torch.cat((img_t, img_prev, gauss_prev), 1).float()
+    pred_gauss = model.forward(inp).double()
+    kpt_loss = nn.BCELoss()(pred_gauss, gt_gauss_t)
+    idxs = torch.nonzero(use_time_loss)
+    time_loss = nn.L1Loss()(pred_gauss[idxs]-gauss_prev[idxs], gt_gauss_t[idxs]-gauss_prev[idxs])
+    alpha = beta = 0.5
+    loss = alpha*kpt_loss + beta*time_loss
     return loss
 
 def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
@@ -51,7 +54,7 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
 workers=0
 dataset_dir = 'dr_cable_cycles_6400'
 output_dir = 'checkpoints'
-save_dir = os.path.join(output_dir, dataset_dir+'_GAUSS_KPTS_ONLY')
+save_dir = os.path.join(output_dir, dataset_dir+'_GAUSS_KPTS_TIME')
 
 if not os.path.exists(output_dir):
     os.mkdir(output_dir)
