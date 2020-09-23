@@ -13,7 +13,7 @@ from src.dataset import KeypointsDataset, transform
 MSE = torch.nn.MSELoss()
 bceLoss = nn.BCELoss
 
-os.environ["CUDA_VISIBLE_DEVICES"]="4"
+os.environ["CUDA_VISIBLE_DEVICES"]="2"
 
 def forward(sample_batched, model):
     img_t, gt_gauss_t, img_prev, gauss_prev, use_time_loss = sample_batched
@@ -24,7 +24,8 @@ def forward(sample_batched, model):
     kpt_loss = nn.BCELoss()(pred_gauss, gt_gauss_t)
     idxs = torch.nonzero(use_time_loss)
     time_loss = nn.L1Loss()(pred_gauss[idxs]-gauss_prev[idxs], gt_gauss_t[idxs]-gauss_prev[idxs])
-    alpha = beta = 0.5
+    alpha = 0.6
+    beta = 0.4
     loss = alpha*kpt_loss + beta*time_loss
     return loss
 
@@ -52,7 +53,7 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
 
 # dataset
 workers=0
-dataset_dir = 'dr_cable_cycles_6400'
+dataset_dir = 'dr_time'
 output_dir = 'checkpoints'
 save_dir = os.path.join(output_dir, dataset_dir+'_GAUSS_KPTS_TIME')
 
@@ -79,7 +80,7 @@ if use_cuda:
 keypoints = KeypointsGauss(NUM_KEYPOINTS, img_height=IMG_HEIGHT, img_width=IMG_WIDTH).cuda()
 
 # optimizer
-#optimizer = optim.Adam(keypoints.parameters(), lr=1.0e-4, weight_decay=1.0e-4)
-optimizer = optim.Adam(keypoints.parameters(), lr=0.0001)
+optimizer = optim.Adam(keypoints.parameters(), lr=1.0e-4, weight_decay=1.0e-4)
+#optimizer = optim.Adam(keypoints.parameters(), lr=0.0001)
 
 fit(train_data, test_data, keypoints, epochs=epochs, checkpoint_path=save_dir)

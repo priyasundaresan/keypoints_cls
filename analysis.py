@@ -12,15 +12,14 @@ from datetime import datetime
 from PIL import Image
 import numpy as np
 
+os.environ["CUDA_VISIBLE_DEVICES"]="2,7"
+
 # model
 keypoints = KeypointsGauss(NUM_KEYPOINTS, img_height=IMG_HEIGHT, img_width=IMG_WIDTH)
-#keypoints.load_state_dict(torch.load('checkpoints/dr_cable_clean_flipped_GAUSS_KPTS_ONLY/model_2_1_8_0.0029400087515022246.pth'))
-#keypoints.load_state_dict(torch.load('checkpoints/dr_cable_cycles_GAUSS_KPTS_ONLY/model_2_1_6_0.0029278998840831802.pth'))
-keypoints.load_state_dict(torch.load('checkpoints/dr_cable_cycles_6400_GAUSS_KPTS_ONLY/model_2_1_6_0.0028304938931869726.pth'))
+keypoints.load_state_dict(torch.load('checkpoints/dr_time_GAUSS_KPTS_TIME/model_2_1_24_0.0021013115601769532.pth'))
 
 # cuda
 use_cuda = torch.cuda.is_available()
-#use_cuda = False
 if use_cuda:
     torch.cuda.set_device(0)
     keypoints = keypoints.cuda()
@@ -30,21 +29,26 @@ transform = transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-#image_dir = 'data/global_cable/images'
-#image_dir = 'data/undo_reid_term_braid/test/images'
-#image_dir = 'data/undo_reid_term_capsule/test/images'
-image_dir = 'data/overhead_round_shoelace_resized'
-#image_dir = 'data/overhead_hairtie_resized'
-#image_dir = 'data/overhead_hairtie_random_fabric_resized'
-#image_dir = 'data/overhead_hairtie_random_resized'
-classes = {0: "Undo", 1:"Reidemeister", 2:"Terminate"}
-for i, f in enumerate(sorted(os.listdir(image_dir))):
+image_dir = 'data/dr_time/train/images'
+
+episode_length = 16
+heatmap_prev = torch.zeros([4, 480, 640]).cuda().double().unsqueeze(0)
+for i in range(1, len(sorted(os.listdir(image_dir)))):
+    pattern = '%05d.jpg'
+    f = pattern%i
+    f_prev = pattern%(i-1)
+    if i%episode_length==0:
+        heatmap_prev = torch.zeros([4, 480, 640]).cuda().double().unsqueeze(0)
+        img_prev = np.zeros((480,640,3))
+    else:
+        img_prev = cv2.imread(os.path.join(image_dir, f_prev))
     img = cv2.imread(os.path.join(image_dir, f))
-    print(img.shape)
-    img_t = transform(img)
-    img_t = img_t.cuda()
+    img_tensor = transform(img).cuda().double().unsqueeze(0)
+    img_prev_tensor = transform(img_prev).cuda().double().unsqueeze(0)
+    inp = torch.cat((img_tensor, img_prev_tensor, heatmap_prev), 1).float()
+    
     # GAUSS
-    heatmap = prediction.predict(img_t)
+    heatmap = prediction.predict(inp)
+    heatmap_prev = heatmap.double()
     heatmap = heatmap.detach().cpu().numpy()
     prediction.plot(img, heatmap, image_id=i)
- 
