@@ -23,12 +23,27 @@ class Prediction:
             
         heatmap = self.model.forward(Variable(imgs))
         return heatmap
+
+    def softmax(self,x):
+        """Compute softmax values for each sets of scores in x."""
+        e_x = np.exp(x - np.max(x))
+        return e_x / e_x.sum()
+
+    def expectation(self, d):
+        width, height = d.T.shape
+        d = d.T.ravel()
+        d_norm = self.softmax(d)
+        x_indices = np.array([i % width for i in range(width*height)])
+        y_indices = np.array([i // width for i in range(width*height)])
+        exp_val = [int(np.dot(d_norm, x_indices)), int(np.dot(d_norm, y_indices))]
+        return exp_val
     
     def plot(self, img, heatmap, image_id=0, cls=None, classes=None):
         print("Running inferences on image: %d"%image_id)
         all_overlays = []
         for i in range(self.num_keypoints):
             h = heatmap[0][i]
+            tmp = self.expectation(h)
             pred_y, pred_x = np.unravel_index(h.argmax(), h.shape)
             vis = cv2.normalize(h, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
             vis = cv2.applyColorMap(vis, cv2.COLORMAP_JET)
