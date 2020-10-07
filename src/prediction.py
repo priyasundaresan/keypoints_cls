@@ -29,6 +29,7 @@ class Prediction:
         all_overlays = []
         for i in range(self.num_keypoints):
             h = heatmap[0][i]
+            h /= h.sum()
             pred_y, pred_x = np.unravel_index(h.argmax(), h.shape)
             vis = cv2.normalize(h, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
             vis = cv2.applyColorMap(vis, cv2.COLORMAP_JET)

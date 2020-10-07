@@ -23,7 +23,7 @@ class KeypointsGauss(nn.Module):
 
 if __name__ == '__main__':
 	model = KeypointsGauss(4).cuda()
-	x = torch.rand((1,3,480,640)).cuda()
+	x = torch.rand((1,10,480,640)).cuda()
 	result = model.forward(x)
 	print(x.shape)
 	print(result.shape)

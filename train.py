@@ -9,7 +9,7 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from config import *
 from src.model import KeypointsGauss
-from src.dataset import KeypointsDataset, transform
+from src.dataset import KeypointsDataset, transform, normalize
 MSE = torch.nn.MSELoss()
 bceLoss = nn.BCELoss
 
@@ -21,11 +21,17 @@ def forward(sample_batched, model):
     img_prev = Variable(img_prev.cuda().double())
     inp = torch.cat((img_t, img_prev, gauss_prev), 1).float()
     pred_gauss = model.forward(inp).double()
-    kpt_loss = nn.BCELoss()(pred_gauss, gt_gauss_t)
+    b,n,w,h = pred_gauss.shape
+    for i in range(n):
+        pred_gauss[:,i] /= pred_gauss[:,i].sum()
+    #kpt_loss = nn.BCELoss()(pred_gauss, gt_gauss_t)
+    q = pred_gauss.reshape(b, n, w*h) + 1e-300
+    p = gt_gauss_t.reshape(b, n, w*h) + 1e-300
+    kpt_loss = F.kl_div(p.log(), q, None, None, 'sum')
     idxs = torch.nonzero(use_time_loss)
     time_loss = nn.L1Loss()(pred_gauss[idxs]-gauss_prev[idxs], gt_gauss_t[idxs]-gauss_prev[idxs])
-    alpha = 0.6
-    beta = 0.4
+    alpha = 1.0
+    beta = 0.0
     loss = alpha*kpt_loss + beta*time_loss
     return loss
 
@@ -48,7 +54,7 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
             loss = forward(sample_batched, model)
             test_loss += loss.item()
         print('test loss:', test_loss / i_batch)
-        if epoch%2 == 0:
+        if epoch%1 == 0:
             torch.save(keypoints.state_dict(), checkpoint_path + '/model_2_1_' + str(epoch) + '_' + str(test_loss/i_batch) + '.pth')
 
 # dataset

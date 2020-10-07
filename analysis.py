@@ -16,7 +16,8 @@ os.environ["CUDA_VISIBLE_DEVICES"]="2,7"
 
 # model
 keypoints = KeypointsGauss(NUM_KEYPOINTS, img_height=IMG_HEIGHT, img_width=IMG_WIDTH)
-keypoints.load_state_dict(torch.load('checkpoints/dr_time_GAUSS_KPTS_TIME/model_2_1_24_0.0021013115601769532.pth'))
+#keypoints.load_state_dict(torch.load('checkpoints/dr_time_GAUSS_KPTS_TIME/model_2_1_24_0.0021013115601769532.pth'))
+keypoints.load_state_dict(torch.load('checkpoints/dr_time_GAUSS_KPTS_TIME/model_2_1_0_nan.pth'))
 
 # cuda
 use_cuda = torch.cuda.is_available()

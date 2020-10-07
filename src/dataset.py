@@ -30,17 +30,30 @@ transform = transforms.Compose([transforms.ToTensor()])
 #    transforms.ToTensor()
 #])
 
-def normalize(x):
-    return F.normalize(x, p=1)
+#def normalize(x):
+#    return F.normalize(x, p=1)
 
-def gauss_2d_batch(width, height, sigma, U, V, normalize_dist=False):
+def normalize(x):
+    y = torch.zeros_like(x)
+    for i in range(len(x)):
+        y[i] = x[i]/x[i].sum()
+    return y
+
+def softmax2d(x):
+    for i in range(len(x)):
+        x[i] = F.softmax(x[i], dim=1).double()
+    return x
+
+def gauss_2d_batch(width, height, sigma, U, V, normalize_dist=True):
     U.unsqueeze_(1).unsqueeze_(2)
     V.unsqueeze_(1).unsqueeze_(2)
     X,Y = torch.meshgrid([torch.arange(0., width), torch.arange(0., height)])
     X,Y = torch.transpose(X, 0, 1).cuda(), torch.transpose(Y, 0, 1).cuda()
     G=torch.exp(-((X-U.float())**2+(Y-V.float())**2)/(2.0*sigma**2))
     if normalize_dist:
-        return normalize(G).double()
+        normalized = normalize(G).double()
+        return normalized
+        #return normalize(G).double()
     return G.double()
 
 def jitter_gaussians(gaussians, width, height, sigma, U, V, pixel_offset=5, alpha=0.1):
