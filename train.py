@@ -1,4 +1,6 @@
 import pickle
+import numpy as np
+import matplotlib.pyplot as plt
 import time
 import os
 import torch
@@ -22,12 +24,12 @@ def forward(sample_batched, model):
     inp = torch.cat((img_t, img_prev, gauss_prev), 1).float()
     pred_gauss = model.forward(inp).double()
     b,n,w,h = pred_gauss.shape
-    for i in range(n):
-        pred_gauss[:,i] /= pred_gauss[:,i].sum()
-    #kpt_loss = nn.BCELoss()(pred_gauss, gt_gauss_t)
-    q = pred_gauss.reshape(b, n, w*h) + 1e-300
-    p = gt_gauss_t.reshape(b, n, w*h) + 1e-300
-    kpt_loss = F.kl_div(p.log(), q, None, None, 'sum')
+    kpt_loss = nn.BCELoss()(pred_gauss + 5e-100, gt_gauss_t)
+    #for i in range(n):
+    #    pred_gauss[:,i] /= pred_gauss[:,i].sum()
+    #q = pred_gauss.reshape(b, n, w*h) + 1e-300
+    #p = gt_gauss_t.reshape(b, n, w*h) + 1e-300
+    #kpt_loss = F.kl_div(p.log(), q, None, None, 'sum')
     idxs = torch.nonzero(use_time_loss)
     time_loss = nn.L1Loss()(pred_gauss[idxs]-gauss_prev[idxs], gt_gauss_t[idxs]-gauss_prev[idxs])
     alpha = 1.0
@@ -36,6 +38,8 @@ def forward(sample_batched, model):
     return loss
 
 def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
+    train_losses = []
+    test_losses = []
     for epoch in range(epochs):
 
         train_loss = 0.0
@@ -47,15 +51,18 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
             train_loss += loss.item()
             print('[%d, %5d] loss: %.3f' % (epoch + 1, i_batch + 1, loss.item()), end='')
             print('\r', end='')
-        print('train loss:', train_loss / i_batch)
+        train_losses.append(train_loss / (i_batch+1))
+        print('train loss:', train_loss / (i_batch+1))
         
         test_loss = 0.0
         for i_batch, sample_batched in enumerate(test_data):
             loss = forward(sample_batched, model)
             test_loss += loss.item()
-        print('test loss:', test_loss / i_batch)
+        print('test loss:', test_loss / (i_batch+1))
+        test_losses.append(test_loss / (i_batch+1))
         if epoch%1 == 0:
-            torch.save(keypoints.state_dict(), checkpoint_path + '/model_2_1_' + str(epoch) + '_' + str(test_loss/i_batch) + '.pth')
+            torch.save(keypoints.state_dict(), checkpoint_path + '/model_2_1_' + str(epoch) + '_' + str(test_loss/(i_batch+1)) + '.pth')
+    return train_losses, test_losses
 
 # dataset
 workers=0
@@ -89,4 +96,12 @@ keypoints = KeypointsGauss(NUM_KEYPOINTS, img_height=IMG_HEIGHT, img_width=IMG_W
 optimizer = optim.Adam(keypoints.parameters(), lr=1.0e-4, weight_decay=1.0e-4)
 #optimizer = optim.Adam(keypoints.parameters(), lr=0.0001)
 
-fit(train_data, test_data, keypoints, epochs=epochs, checkpoint_path=save_dir)
+train_losses, test_losses = fit(train_data, test_data, keypoints, epochs=epochs, checkpoint_path=save_dir)
+
+plt.title("Training Loss over Time")
+plt.ylabel("Loss")
+plt.ylabel("Epochs")
+plt.plot(np.arange(len(train_losses)), train_losses)
+plt.plot(np.arange(len(test_losses)), test_losses)
+plt.legend(["train", "val"])
+plt.savefig(os.path.join(save_dir, "loss.png"))

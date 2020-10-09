@@ -44,7 +44,7 @@ def softmax2d(x):
         x[i] = F.softmax(x[i], dim=1).double()
     return x
 
-def gauss_2d_batch(width, height, sigma, U, V, normalize_dist=True):
+def gauss_2d_batch(width, height, sigma, U, V, normalize_dist=False):
     U.unsqueeze_(1).unsqueeze_(2)
     V.unsqueeze_(1).unsqueeze_(2)
     X,Y = torch.meshgrid([torch.arange(0., width), torch.arange(0., height)])
