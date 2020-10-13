@@ -30,9 +30,6 @@ transform = transforms.Compose([transforms.ToTensor()])
 #    transforms.ToTensor()
 #])
 
-#def normalize(x):
-#    return F.normalize(x, p=1)
-
 def normalize(x):
     y = torch.zeros_like(x)
     for i in range(len(x)):
