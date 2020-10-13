@@ -17,7 +17,8 @@ import numpy as np
 keypoints = KeypointsGauss(NUM_KEYPOINTS, img_height=IMG_HEIGHT, img_width=IMG_WIDTH)
 #keypoints.load_state_dict(torch.load('checkpoints/dr_cable_cycles_6400_GAUSS_KPTS_ONLY/model_2_1_10_0.0029300788630979243.pth'))
 #keypoints.load_state_dict(torch.load('checkpoints/dr_cable_cycles_9K_GAUSS_KPTS_ONLY/model_2_1_18_0.003089638756832411.pth'))
-keypoints.load_state_dict(torch.load('checkpoints/dr_cable_cycles_9.5K_GAUSS_KPTS_ONLY/model_2_1_4_0.0031701664664068427.pth'))
+#keypoints.load_state_dict(torch.load('checkpoints/dr_cable_cycles_9.5K_GAUSS_KPTS_ONLY/model_2_1_4_0.0031701664664068427.pth'))
+keypoints.load_state_dict(torch.load('checkpoints/real_aug_GAUSS_KPTS_ONLY/model_2_1_22_0.0024831097712612773.pth'))
 #keypoints.load_state_dict(torch.load('checkpoints/cable_mask_dset_GAUSS_KPTS_ONLY/model_2_1_8_0.0033715498981842476.pth'))
 
 # cuda
@@ -34,6 +35,8 @@ transform = transform = transforms.Compose([
 
 #image_dir = 'data/overhead_hairtie_random_resized_larger'
 image_dir = 'data/hairtie_overcrossing_resized'
+#image_dir = 'data/overhead_hairtie_resized'
+#image_dir = 'data/overhead_hairtie_random_fabric_resized'
 #image_dir = 'data/hairtie_overcrossing_resized_masks'
 #image_dir = 'data/overhead_hairtie_resized_masks'
 classes = {0: "Undo", 1:"Reidemeister", 2:"Terminate"}
