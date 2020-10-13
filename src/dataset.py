@@ -13,22 +13,22 @@ from datetime import datetime
 import imgaug.augmenters as iaa
 
 # No domain randomization
-#transform = transforms.Compose([transforms.ToTensor()])
+transform = transforms.Compose([transforms.ToTensor()])
 
 # Domain randomization
-transform = transforms.Compose([
-    iaa.Sequential([
-        iaa.AddToHueAndSaturation((-20, 20)),
-        iaa.LinearContrast((0.85, 1.2), per_channel=0.25), 
-        iaa.Add((-10, 30), per_channel=True),
-        iaa.GammaContrast((0.85, 1.2)),
-        iaa.GaussianBlur(sigma=(0.0, 0.6)),
-        iaa.ChangeColorTemperature((5000,35000)),
-        iaa.MultiplySaturation((0.95, 1.05)),
-        iaa.AdditiveGaussianNoise(scale=(0, 0.0125*255)),
-    ], random_order=True).augment_image,
-    transforms.ToTensor()
-])
+#transform = transforms.Compose([
+#    iaa.Sequential([
+#        iaa.AddToHueAndSaturation((-20, 20)),
+#        iaa.LinearContrast((0.85, 1.2), per_channel=0.25), 
+#        iaa.Add((-10, 30), per_channel=True),
+#        iaa.GammaContrast((0.85, 1.2)),
+#        iaa.GaussianBlur(sigma=(0.0, 0.6)),
+#        iaa.ChangeColorTemperature((5000,35000)),
+#        iaa.MultiplySaturation((0.95, 1.05)),
+#        iaa.AdditiveGaussianNoise(scale=(0, 0.0125*255)),
+#    ], random_order=True).augment_image,
+#    transforms.ToTensor()
+#])
 
 def normalize(x):
     return F.normalize(x, p=1)

@@ -49,7 +49,7 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
 
 # dataset
 workers=0
-dataset_dir = 'cable_mask_dset'
+dataset_dir = 'real_aug'
 output_dir = 'checkpoints'
 save_dir = os.path.join(output_dir, dataset_dir+'_GAUSS_KPTS_ONLY')
 
