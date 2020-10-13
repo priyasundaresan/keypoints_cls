@@ -6,7 +6,7 @@ from torchvision import transforms
 from torch.utils.data import DataLoader
 from config import *
 from src.model import KeypointsGauss
-from src.dataset import KeypointsDataset, transform
+from src.dataset import KeypointsDataset, transform, gauss_2d_batch
 from src.prediction import Prediction
 from datetime import datetime
 from PIL import Image
@@ -17,7 +17,9 @@ os.environ["CUDA_VISIBLE_DEVICES"]="2,7"
 # model
 keypoints = KeypointsGauss(NUM_KEYPOINTS, img_height=IMG_HEIGHT, img_width=IMG_WIDTH)
 #keypoints.load_state_dict(torch.load('checkpoints/dr_time_GAUSS_KPTS_TIME/model_2_1_24_0.0021013115601769532.pth'))
-keypoints.load_state_dict(torch.load('checkpoints/dr_time_GAUSS_KPTS_TIME/model_2_1_0_nan.pth'))
+#keypoints.load_state_dict(torch.load('checkpoints/dr_time_GAUSS_KPTS_TIME/model_2_1_0_nan.pth'))
+#keypoints.load_state_dict(torch.load('checkpoints/dr_time_95-5/model_2_1_24_1.2693831775073476.pth'))
+keypoints.load_state_dict(torch.load('checkpoints/dr_time_GAUSS_KPTS_TIME/model_2_1_24_0.2717437341543025.pth'))
 
 # cuda
 use_cuda = torch.cuda.is_available()
@@ -31,9 +33,10 @@ transform = transform = transforms.Compose([
 ])
 
 image_dir = 'data/dr_time/train/images'
+labels_folder = 'data/dr_time/train/keypoints'
 
 episode_length = 16
-heatmap_prev = torch.zeros([4, 480, 640]).cuda().double().unsqueeze(0)
+#heatmap_prev = torch.zeros([4, 480, 640]).cuda().double().unsqueeze(0)
 for i in range(1, len(sorted(os.listdir(image_dir)))):
     pattern = '%05d.jpg'
     f = pattern%i
@@ -43,6 +46,10 @@ for i in range(1, len(sorted(os.listdir(image_dir)))):
         img_prev = np.zeros((480,640,3))
     else:
         img_prev = cv2.imread(os.path.join(image_dir, f_prev))
+        label = np.load(os.path.join(labels_folder, '%05d.npy'%i)).reshape(4, 2)
+        U_t = torch.from_numpy(np.clip(label[:, 0], 0, 640-1)).cuda()
+        V_t = torch.from_numpy(np.clip(label[:, 1], 0, 480-1)).cuda()
+        heatmap_prev = gauss_2d_batch(640, 480, 8, U_t, V_t).unsqueeze(0)
     img = cv2.imread(os.path.join(image_dir, f))
     img_tensor = transform(img).cuda().double().unsqueeze(0)
     img_prev_tensor = transform(img_prev).cuda().double().unsqueeze(0)
@@ -50,6 +57,6 @@ for i in range(1, len(sorted(os.listdir(image_dir)))):
     
     # GAUSS
     heatmap = prediction.predict(inp)
-    heatmap_prev = heatmap.double()
+    #heatmap_prev = heatmap.double()
     heatmap = heatmap.detach().cpu().numpy()
     prediction.plot(img, heatmap, image_id=i)

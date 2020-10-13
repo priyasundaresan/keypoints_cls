@@ -17,49 +17,91 @@ bceLoss = nn.BCELoss
 
 os.environ["CUDA_VISIBLE_DEVICES"]="2"
 
-def forward(sample_batched, model):
+def expectation(d):
+    b,n,w,h = d.shape
+    d_flattened = d.view(b,n,w*h)
+    x_indices = torch.Tensor([i%w for i in range(w*h)]).cuda().double()
+    y_indices = torch.Tensor([i//w for i in range(w*h)]).cuda().double()
+    mu_x = torch.zeros(b,n,1).cuda().double()
+    mu_y = torch.zeros(b,n,1).cuda().double()
+    for b_idx in range(b):
+        for n_idx in range(n):
+            mu_x[b_idx, n_idx] = torch.dot(d_flattened[b_idx, n_idx], x_indices)
+            mu_y[b_idx, n_idx] = torch.dot(d_flattened[b_idx, n_idx], y_indices)
+    return mu_x, mu_y
+
+def forward(sample_batched, model, beta=3):
     img_t, gt_gauss_t, img_prev, gauss_prev, use_time_loss = sample_batched
     img_t = Variable(img_t.cuda().double())
     img_prev = Variable(img_prev.cuda().double())
     inp = torch.cat((img_t, img_prev, gauss_prev), 1).float()
     pred_gauss = model.forward(inp).double()
     b,n,w,h = pred_gauss.shape
-    kpt_loss = nn.BCELoss()(pred_gauss + 5e-100, gt_gauss_t)
-    #for i in range(n):
-    #    pred_gauss[:,i] /= pred_gauss[:,i].sum()
-    #q = pred_gauss.reshape(b, n, w*h) + 1e-300
-    #p = gt_gauss_t.reshape(b, n, w*h) + 1e-300
-    #kpt_loss = F.kl_div(p.log(), q, None, None, 'sum')
+    kpt_loss = nn.BCELoss()(pred_gauss, gt_gauss_t)
+
+    # Normalize pred, gauss distributions
+    pred_gauss_norm = pred_gauss.clone()
+    gt_gauss_t_norm = gt_gauss_t.clone()
+    for i in range(n):
+        pred_gauss_norm[:,i] /= pred_gauss_norm[:,i].sum()
+        gt_gauss_t_norm /= gt_gauss_t_norm[:,i].sum()
+        gauss_prev /= gauss_prev[:,i].sum()
+
+    # Compute the expectations
+    pred_exp_x, pred_exp_y = expectation(pred_gauss_norm)
+    gt_exp_x, gt_exp_y = expectation(gt_gauss_t_norm)
+    gt_prev_exp_x, gt_prev_exp_y = expectation(gauss_prev)
+
     idxs = torch.nonzero(use_time_loss)
-    time_loss = nn.L1Loss()(pred_gauss[idxs]-gauss_prev[idxs], gt_gauss_t[idxs]-gauss_prev[idxs])
-    alpha = 1.0
-    beta = 0.0
-    loss = alpha*kpt_loss + beta*time_loss
-    return loss
+    if len(idxs):
+        x_offset_loss = nn.L1Loss()(pred_exp_x[idxs] - gt_prev_exp_x[idxs], gt_exp_x[idxs] - gt_prev_exp_x[idxs])
+        y_offset_loss = nn.L1Loss()(pred_exp_y[idxs] - gt_prev_exp_y[idxs], gt_exp_y[idxs] - gt_prev_exp_y[idxs])
+        time_loss = 0.5*x_offset_loss + 0.5*y_offset_loss
+        alpha = 1.0 - 10**(-beta)
+    else:
+        time_loss = torch.Tensor([0.0]).cuda().double()
+        alpha = 1.0
+    #try:
+    #    print(alpha*kpt_loss.item(), (1-alpha)*time_loss.item())
+    #except:
+    #    print(alpha*kpt_loss, (1-alpha)*time_loss)
+
+    loss = alpha*kpt_loss + (1-alpha)*time_loss
+    return loss, kpt_loss, time_loss
 
 def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
-    train_losses = []
-    test_losses = []
+    train_losses, train_kpt_losses, train_time_losses = [], [], []
+    test_losses, test_kpt_losses, test_time_losses = [], [], []
+    #epoch_to_start_time_loss = int(0.5*epochs)
+
     for epoch in range(epochs):
 
-        train_loss = 0.0
+        train_loss = train_kpt_loss = train_time_loss = 0.0
         for i_batch, sample_batched in enumerate(train_data):
             optimizer.zero_grad()
-            loss = forward(sample_batched, model)
+            loss, kpt_loss, time_loss = forward(sample_batched, model, beta=(epochs-epoch))
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
+            train_kpt_loss += kpt_loss.item()
+            train_time_loss += time_loss.item()
             print('[%d, %5d] loss: %.3f' % (epoch + 1, i_batch + 1, loss.item()), end='')
             print('\r', end='')
         train_losses.append(train_loss / (i_batch+1))
+        train_kpt_losses.append(train_kpt_loss / (i_batch+1))
+        train_time_losses.append(train_time_loss / (i_batch+1))
         print('train loss:', train_loss / (i_batch+1))
         
         test_loss = 0.0
         for i_batch, sample_batched in enumerate(test_data):
-            loss = forward(sample_batched, model)
+            loss, kpt_loss, time_loss = forward(sample_batched, model, beta=(epochs-epoch))
             test_loss += loss.item()
+            test_kpt_loss += kpt_loss.item()
+            test_time_loss += time_loss.item()
         print('test loss:', test_loss / (i_batch+1))
         test_losses.append(test_loss / (i_batch+1))
+        test_kpt_losses.append(test_kpt_loss / (i_batch+1))
+        test_time_losses.append(test_time_loss / (i_batch+1))
         if epoch%1 == 0:
             torch.save(keypoints.state_dict(), checkpoint_path + '/model_2_1_' + str(epoch) + '_' + str(test_loss/(i_batch+1)) + '.pth')
     return train_losses, test_losses
@@ -98,10 +140,29 @@ optimizer = optim.Adam(keypoints.parameters(), lr=1.0e-4, weight_decay=1.0e-4)
 
 train_losses, test_losses = fit(train_data, test_data, keypoints, epochs=epochs, checkpoint_path=save_dir)
 
-plt.title("Training Loss over Time")
+plt.title("Total Training Loss over Time")
 plt.ylabel("Loss")
-plt.ylabel("Epochs")
+plt.xlabel("Epochs")
 plt.plot(np.arange(len(train_losses)), train_losses)
 plt.plot(np.arange(len(test_losses)), test_losses)
 plt.legend(["train", "val"])
-plt.savefig(os.path.join(save_dir, "loss.png"))
+plt.savefig(os.path.join(save_dir, "total_loss.png"))
+plt.clf()
+
+plt.title("Keypoint Loss over Time")
+plt.ylabel("Loss")
+plt.xlabel("Epochs")
+plt.plot(np.arange(len(train_losses)), train_kpt_losses)
+plt.plot(np.arange(len(test_losses)), test_kpt_losses)
+plt.legend(["train", "val"])
+plt.savefig(os.path.join(save_dir, "kpt_loss.png"))
+plt.clf()
+
+plt.title("Time Loss over Time")
+plt.ylabel("Loss")
+plt.xlabel("Epochs")
+plt.plot(np.arange(len(train_losses)), train_time_losses)
+plt.plot(np.arange(len(test_losses)), test_time_losses)
+plt.legend(["train", "val"])
+plt.savefig(os.path.join(save_dir, "time_loss.png"))
+plt.clf()
