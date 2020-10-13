@@ -92,7 +92,7 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
         train_time_losses.append(train_time_loss / (i_batch+1))
         print('train loss:', train_loss / (i_batch+1))
         
-        test_loss = 0.0
+        test_loss = test_kpt_loss = test_time_loss = 0.0
         for i_batch, sample_batched in enumerate(test_data):
             loss, kpt_loss, time_loss = forward(sample_batched, model, beta=(epochs-epoch))
             test_loss += loss.item()
@@ -104,7 +104,7 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
         test_time_losses.append(test_time_loss / (i_batch+1))
         if epoch%1 == 0:
             torch.save(keypoints.state_dict(), checkpoint_path + '/model_2_1_' + str(epoch) + '_' + str(test_loss/(i_batch+1)) + '.pth')
-    return train_losses, test_losses
+    return train_losses, test_losses, train_kpt_losses, test_kpt_losses, train_time_losses, test_time_losses
 
 # dataset
 workers=0
@@ -138,7 +138,9 @@ keypoints = KeypointsGauss(NUM_KEYPOINTS, img_height=IMG_HEIGHT, img_width=IMG_W
 optimizer = optim.Adam(keypoints.parameters(), lr=1.0e-4, weight_decay=1.0e-4)
 #optimizer = optim.Adam(keypoints.parameters(), lr=0.0001)
 
-train_losses, test_losses = fit(train_data, test_data, keypoints, epochs=epochs, checkpoint_path=save_dir)
+train_losses, test_losses, \
+train_kpt_losses, test_kpt_losses, \
+train_time_losses, test_time_losses  = fit(train_data, test_data, keypoints, epochs=epochs, checkpoint_path=save_dir)
 
 plt.title("Total Training Loss over Time")
 plt.ylabel("Loss")
