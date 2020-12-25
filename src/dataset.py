@@ -10,7 +10,7 @@ import numpy as np
 import pickle
 import os
 from datetime import datetime
-import imgaug.augmenters as iaa
+#import imgaug.augmenters as iaa
 
 # No domain randomization
 transform = transforms.Compose([transforms.ToTensor()])
@@ -64,11 +64,12 @@ class KeypointsDataset(Dataset):
             label = np.load(os.path.join(labels_folder, '%05d.npy'%i)).reshape(num_keypoints, 2)
             label[:,0] = np.clip(label[:, 0], 0, self.img_width-1)
             label[:,1] = np.clip(label[:, 1], 0, self.img_height-1)
-            self.imgs.append(os.path.join(img_folder, '%05d.jpg'%i))
+            self.imgs.append(os.path.join(img_folder, '%05d.npy'%i))
             self.labels.append(torch.from_numpy(label).cuda())
 
     def __getitem__(self, index):  
-        img = self.transform(cv2.imread(self.imgs[index]))
+        #img = self.transform(cv2.imread(self.imgs[index]))
+        img = self.transform(np.load(self.imgs[index], allow_pickle=True))
         labels = self.labels[index]
         U = labels[:,0]
         V = labels[:,1]

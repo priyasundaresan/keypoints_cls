@@ -13,7 +13,7 @@ from src.dataset import KeypointsDataset, transform
 MSE = torch.nn.MSELoss()
 bceLoss = nn.BCELoss
 
-os.environ["CUDA_VISIBLE_DEVICES"]="4"
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 def forward(sample_batched, model):
     img, gt_gauss = sample_batched
@@ -45,29 +45,29 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
             test_loss += loss.item()
         print('test loss:', test_loss / i_batch)
         if epoch%2 == 0:
-            torch.save(keypoints.state_dict(), checkpoint_path + '/model_2_1_' + str(epoch) + '_' + str(test_loss/i_batch) + '.pth')
+            torch.save(keypoints.state_dict(), checkpoint_path + '/model_2_1_' + str(epoch) + '.pth')
 
 # dataset
 workers=0
-dataset_dir = 'real_aug'
+dataset_dir = 'real_crop'
 output_dir = 'checkpoints'
-save_dir = os.path.join(output_dir, dataset_dir+'_GAUSS_KPTS_ONLY')
+save_dir = os.path.join(output_dir, dataset_dir)
 
 if not os.path.exists(output_dir):
     os.mkdir(output_dir)
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
-train_dataset = KeypointsDataset('data/%s/train/images'%dataset_dir,
-                           'data/%s/train/keypoints'%dataset_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
+train_dataset = KeypointsDataset('datasets/%s/train/images'%dataset_dir,
+                           'datasets/%s/train/annots'%dataset_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
 train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
 
-test_dataset = KeypointsDataset('data/%s/test/images'%dataset_dir,
-                           'data/%s/test/keypoints'%dataset_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
+test_dataset = KeypointsDataset('datasets/%s/test/images'%dataset_dir,
+                           'datasets/%s/test/annots'%dataset_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
 test_data = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
 
 use_cuda = torch.cuda.is_available()
-
+print("USE CUDA", use_cuda)
 Tensor = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
 if use_cuda:
     torch.cuda.set_device(0)

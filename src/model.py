@@ -14,7 +14,7 @@ class KeypointsGauss(nn.Module):
 		self.num_outputs = self.num_keypoints
 		self.img_height = img_height
 		self.img_width = img_width
-		self.resnet = Resnet34_8s()
+		self.resnet = Resnet34_8s(channels=4, pretrained=False)
 		self.sigmoid = torch.nn.Sigmoid()
 	def forward(self, x):
 		output = self.resnet(x) 
