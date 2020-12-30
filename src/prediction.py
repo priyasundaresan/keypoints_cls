@@ -39,7 +39,8 @@ class Prediction:
         return exp_val
     
     def plot(self, input, heatmap, image_id=0, cls=None, classes=None):
-        img = input if input.shape[2] == 3 else input[:, :, :3]
+        input = np.transpose(input[0], (1,2,0))
+        img = input[:, :, :3] * 255
         img = img.astype(np.uint8)
         print("Running inferences on image: %d"%image_id)
         all_overlays = []
@@ -62,10 +63,10 @@ class Prediction:
         result = cv2.vconcat(all_overlays[::-1])#[:self.num_keypoints//2])
         #result2 = cv2.vconcat(all_overlays[self.num_keypoints//2:])
         #result = cv2.hconcat((result1, result2))
-        #cv2.putText(result, "Right Endpoint", (10, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        cv2.putText(result, "Given Endpoint", (10, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         #cv2.putText(result, "Left Endpoint", (650, 490), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-        #cv2.putText(result, "Hold", (650, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-        #cv2.putText(result, "Pull", (10, 490), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        cv2.putText(result, "Pin", (10, 510), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        cv2.putText(result, "Pull", (10, 1010), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         if cls is not None:
             label = classes[cls]
             cv2.putText(result, label, (10, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)

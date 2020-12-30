@@ -33,9 +33,10 @@ transform = transforms.Compose([transforms.ToTensor()])
 def normalize(x):
     return F.normalize(x, p=1)
 
-def gauss_2d_batch(width, height, sigma, U, V, normalize_dist=False):
-    U.unsqueeze_(1).unsqueeze_(2)
-    V.unsqueeze_(1).unsqueeze_(2)
+def gauss_2d_batch(width, height, sigma, U, V, normalize_dist=False, single=False):
+    if not single:
+    	U.unsqueeze_(1).unsqueeze_(2)
+    	V.unsqueeze_(1).unsqueeze_(2)
     X,Y = torch.meshgrid([torch.arange(0., width), torch.arange(0., height)])
     X,Y = torch.transpose(X, 0, 1).cuda(), torch.transpose(Y, 0, 1).cuda()
     G=torch.exp(-((X-U.float())**2+(Y-V.float())**2)/(2.0*sigma**2))
@@ -61,21 +62,24 @@ class KeypointsDataset(Dataset):
         self.labels = []
         for i in range(len(os.listdir(labels_folder))):
             #label = np.load(os.path.join(labels_folder, '%05d.npy'%i))[:-2].reshape(num_keypoints, 2)
-            label = np.load(os.path.join(labels_folder, '%05d.npy'%i)).reshape(num_keypoints, 2)
+            label = np.load(os.path.join(labels_folder, '%05d.npy'%i)).reshape(num_keypoints+1, 2)
             label[:,0] = np.clip(label[:, 0], 0, self.img_width-1)
             label[:,1] = np.clip(label[:, 1], 0, self.img_height-1)
-            self.imgs.append(os.path.join(img_folder, '%05d.npy'%i))
+            self.imgs.append(os.path.join(img_folder, '%05d.jpg'%i))
             self.labels.append(torch.from_numpy(label).cuda())
 
     def __getitem__(self, index):  
-        #img = self.transform(cv2.imread(self.imgs[index]))
-        img = self.transform(np.load(self.imgs[index], allow_pickle=True))
+        img = self.transform(cv2.imread(self.imgs[index]))
         labels = self.labels[index]
-        U = labels[:,0]
-        V = labels[:,1]
+        U = labels[1:,0]
+        V = labels[1:,1]
+        given = labels[0]
+        given_gauss = gauss_2d_batch(self.img_width, self.img_height, self.gauss_sigma, given[0], given[1], single=True)
+        given_gauss = torch.unsqueeze(given_gauss, 0).cuda()
+        combined = torch.cat((img.cuda().double(), given_gauss), dim=0).float()
         gaussians = gauss_2d_batch(self.img_width, self.img_height, self.gauss_sigma, U, V)
-        return img, gaussians
-    
+        return combined, gaussians
+
     def __len__(self):
         return len(self.labels)
 

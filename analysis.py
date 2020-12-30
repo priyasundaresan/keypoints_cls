@@ -6,18 +6,17 @@ from torchvision import transforms
 from torch.utils.data import DataLoader
 from config import *
 from src.model import KeypointsGauss
-#from src.model_multi_headed import KeypointsGauss
 from src.dataset import KeypointsDataset, transform
 from src.prediction import Prediction
 from datetime import datetime
 from PIL import Image
 import numpy as np
 
+os.environ["CUDA_VISIBLE_DEVICES"]="4"
+
 # model
 keypoints = KeypointsGauss(NUM_KEYPOINTS, img_height=IMG_HEIGHT, img_width=IMG_WIDTH)
-#keypoints.load_state_dict(torch.load('checkpoints/dr_cable_cycles_6400_GAUSS_KPTS_ONLY/model_2_1_10_0.0029300788630979243.pth'))
-#keypoints.load_state_dict(torch.load('checkpoints/dr_cable_cycles_9K_GAUSS_KPTS_ONLY/model_2_1_18_0.003089638756832411.pth'))
-keypoints.load_state_dict(torch.load('checkpoints/real_crop/model_2_1_24.pth'))
+keypoints.load_state_dict(torch.load('checkpoints/nonplanar-hulk-conditioned-aug/model_2_1_24.pth'))
 #keypoints.load_state_dict(torch.load('checkpoints/cable_mask_dset_GAUSS_KPTS_ONLY/model_2_1_8_0.0033715498981842476.pth'))
 
 # cuda
@@ -33,21 +32,18 @@ transform = transform = transforms.Compose([
 ])
 
 #image_dir = 'data/overhead_hairtie_random_resized_larger'
-image_dir = 'datasets/real_crop_test/images'
+image_dir = 'data/nonplanar-hulk-conditioned-aug/test/images'
 #image_dir = 'data/hairtie_overcrossing_resized_masks'
 #image_dir = 'data/overhead_hairtie_resized_masks'
-classes = {0: "Undo", 1:"Reidemeister", 2:"Terminate"}
-for i, f in enumerate(sorted(os.listdir(image_dir))):
-    img = np.load(os.path.join(image_dir, f), allow_pickle=True)
-    print(img.shape)
-    img_t = transform(img)
-    img_t = img_t.cuda()
+
+data_dir = "non_cond_label_test"
+test_dataset = KeypointsDataset('data/%s/images'%data_dir,
+                           'data/%s/annots'%data_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
+test_data = DataLoader(test_dataset, batch_size=1, shuffle=True, num_workers=0)
+
+for i, f in enumerate(test_data):
+    img_t = f[0]
     # GAUSS
     heatmap = prediction.predict(img_t)
     heatmap = heatmap.detach().cpu().numpy()
-    prediction.plot(img, heatmap, image_id=i)
- 
-    #heatmap, cls = prediction.predict(img_t)
-    #cls = torch.argmax(cls).item()
-    #heatmap = heatmap.detach().cpu().numpy()
-    #prediction.plot(img, heatmap, image_id=i, cls=cls, classes=classes)
+    prediction.plot(img_t.detach().cpu().numpy(), heatmap, image_id=i)

@@ -13,7 +13,7 @@ from src.dataset import KeypointsDataset, transform
 MSE = torch.nn.MSELoss()
 bceLoss = nn.BCELoss
 
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+os.environ["CUDA_VISIBLE_DEVICES"]="4"
 
 def forward(sample_batched, model):
     img, gt_gauss = sample_batched
@@ -49,7 +49,7 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
 
 # dataset
 workers=0
-dataset_dir = 'real_crop'
+dataset_dir = 'nonplanar-hulk-conditioned-aug'
 output_dir = 'checkpoints'
 save_dir = os.path.join(output_dir, dataset_dir)
 
@@ -58,12 +58,12 @@ if not os.path.exists(output_dir):
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
-train_dataset = KeypointsDataset('datasets/%s/train/images'%dataset_dir,
-                           'datasets/%s/train/annots'%dataset_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
+train_dataset = KeypointsDataset('data/%s/train/images'%dataset_dir,
+                           'data/%s/train/annots'%dataset_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
 train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
 
-test_dataset = KeypointsDataset('datasets/%s/test/images'%dataset_dir,
-                           'datasets/%s/test/annots'%dataset_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
+test_dataset = KeypointsDataset('data/%s/test/images'%dataset_dir,
+                           'data/%s/test/annots'%dataset_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
 test_data = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
 
 use_cuda = torch.cuda.is_available()
