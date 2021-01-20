@@ -60,12 +60,14 @@ class KeypointsDataset(Dataset):
         self.imgs = []
         self.labels = []
         for i in range(len(os.listdir(labels_folder))):
-            #label = np.load(os.path.join(labels_folder, '%05d.npy'%i))[:-2].reshape(num_keypoints, 2)
-            label = np.load(os.path.join(labels_folder, '%05d.npy'%i)).reshape(num_keypoints, 2)
-            label[:,0] = np.clip(label[:, 0], 0, self.img_width-1)
-            label[:,1] = np.clip(label[:, 1], 0, self.img_height-1)
-            self.imgs.append(os.path.join(img_folder, '%05d.jpg'%i))
-            self.labels.append(torch.from_numpy(label).cuda())
+            try:
+                label = np.load(os.path.join(labels_folder, '%05d.npy'%i)).reshape(num_keypoints, 2)
+                label[:,0] = np.clip(label[:, 0], 0, self.img_width-1)
+                label[:,1] = np.clip(label[:, 1], 0, self.img_height-1)
+                self.imgs.append(os.path.join(img_folder, '%05d.jpg'%i))
+                self.labels.append(torch.from_numpy(label).cuda())
+            except:
+                continue
 
     def __getitem__(self, index):  
         img = self.transform(cv2.imread(self.imgs[index]))
