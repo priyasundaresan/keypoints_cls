@@ -14,16 +14,20 @@ from src.dataset_multi_headed import KeypointsDataset, transform
 MSE = torch.nn.MSELoss()
 bceLoss = nn.BCELoss()
 crossEntropyLoss = F.cross_entropy
+bceLogitLoss = F.binary_cross_entropy_with_logits
 
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+os.environ["CUDA_VISIBLE_DEVICES"]="3"
 
 def forward(sample_batched, model):
     img, gt_gauss, cls = sample_batched
     img = Variable(img.cuda() if use_cuda else img)
     pred_gauss, cls_pred = model.forward(img)
-    cls_loss = crossEntropyLoss(cls_pred, cls.cuda().long()).double()
+    #cls_loss = crossEntropyLoss(cls_pred, cls.cuda().long()).double()
+    #print(cls_pred.squeeze(), cls_pred.squeeze().shape, cls, cls.cuda().shape)
+    cls_loss = bceLogitLoss(cls_pred, cls.cuda().float().view(cls_pred.shape)).double()
     kpt_loss = bceLoss(pred_gauss.double(), gt_gauss)
-    cls_correct = torch.argmax(cls_pred).item() == cls.item()
+    pred = torch.round(torch.sigmoid(cls_pred.squeeze()))
+    cls_correct = torch.sum(pred == cls.cuda().float())
     return cls_loss, kpt_loss, cls_correct
 
 def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
@@ -60,7 +64,7 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
             print('[%d, %5d] kpts loss: %.3f, cls loss: %.3f, cls_accuracy: %.3f' % \
 	           (epoch + 1, i_batch + 1, kpt_loss.item(), cls_loss.item(), accuracy), end='')
             print('\r', end='')
-            seen += 1
+            seen += batch_size
         train_kpts_losses.append(train_kpt_loss/i_batch)
         train_cls_losses.append(train_cls_loss/i_batch)
         train_losses.append(train_loss/i_batch)
@@ -110,7 +114,7 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
 
 # dataset
 workers=0
-dataset_dir = 'undo_reid_term'
+dataset_dir = 'blue_cls_aug'
 output_dir = 'checkpoints'
 save_dir = os.path.join(output_dir, dataset_dir)
 
@@ -119,12 +123,10 @@ if not os.path.exists(output_dir):
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
-train_dataset = KeypointsDataset('data/%s/train/images'%dataset_dir,
-                           'data/%s/train/actions'%dataset_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
+train_dataset = KeypointsDataset('data/%s/%s'%(dataset_dir,'train'), NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
 train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
 
-test_dataset = KeypointsDataset('data/%s/test/images'%dataset_dir,
-                           'data/%s/test/actions'%dataset_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
+test_dataset = KeypointsDataset('data/%s/%s'%(dataset_dir,'val'), NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
 test_data = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
 
 use_cuda = torch.cuda.is_available()
@@ -141,4 +143,4 @@ optimizer_kpt = optim.Adam(keypoints.parameters(), lr=1e-4, weight_decay=1.0e-4)
 optimizer_cls = optim.Adam(keypoints.parameters(), lr=1e-4, weight_decay=1.0e-4)
 
 history = fit(train_data, test_data, keypoints, epochs=epochs, checkpoint_path=save_dir)
-plot_history(history, epochs, save_dir)
+#plot_history(history, epochs, save_dir)

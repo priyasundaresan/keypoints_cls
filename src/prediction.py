@@ -21,8 +21,8 @@ class Prediction:
         elif len(imgs.shape) == 3:
             imgs = imgs.view(-1, imgs.shape[0], imgs.shape[1], imgs.shape[2])
             
-        heatmap = self.model.forward(Variable(imgs))
-        return heatmap
+        heatmap, cls = self.model.forward(Variable(imgs))
+        return heatmap, cls
 
     def softmax(self,x):
         """Compute softmax values for each sets of scores in x."""
@@ -115,14 +115,14 @@ class Prediction:
         result1 = cv2.vconcat(all_overlays[:self.num_keypoints//2])
         result2 = cv2.vconcat(all_overlays[self.num_keypoints//2:])
         result = cv2.hconcat((result1, result2))
-        cv2.putText(result, "Left Endpoint", (10, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-        cv2.putText(result, "Right Endpoint", (650, 490), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-        cv2.putText(result, "Hold", (650, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-        cv2.putText(result, "Pull", (10, 490), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        #cv2.putText(result, "Left Endpoint", (10, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        #cv2.putText(result, "Right Endpoint", (650, 490), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        #cv2.putText(result, "Hold", (650, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        #cv2.putText(result, "Pull", (10, 490), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         if cls is not None:
             label = classes[cls]
             cv2.putText(result, label, (10, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-        result =  cv2.resize(result, (640,480))
+        result =  cv2.resize(result, (640,240))
         cv2.imwrite('preds/out%04d.png'%image_id, result)
 
     def crop_pull_hold(self, img, heatmap, image_id=0, crop_width=60, crop_height=60):

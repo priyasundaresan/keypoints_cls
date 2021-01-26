@@ -32,7 +32,7 @@ def vis_gauss(gaussians):
     cv2.imwrite('test.png', output)
 
 class KeypointsDataset(Dataset):
-    def __init__(self, img_folder, labels_folder, num_keypoints, img_height, img_width, transform, gauss_sigma=8):
+    def __init__(self, dataset_dir, num_keypoints, img_height, img_width, transform, gauss_sigma=8):
         self.num_keypoints = num_keypoints
         self.img_height = img_height
         self.img_width = img_width
@@ -42,10 +42,16 @@ class KeypointsDataset(Dataset):
         self.imgs = []
         self.classes = []
         self.labels = []
+        labels_folder = os.path.join(dataset_dir, 'annots')
+        img_folder = os.path.join(dataset_dir, 'images')
         for i in range(len(os.listdir(labels_folder))):
-            action = np.load(os.path.join(labels_folder, '%05d.npy'%i))
-            label = action[:-2].reshape(num_keypoints, 2)
-            cls = sum(action[-2:])
+            action = np.load(os.path.join(labels_folder, '%05d.npy'%i), allow_pickle=True)
+            if len(action) != 3:
+                print(action)
+                break
+            #label = action[:-1].reshape(num_keypoints, 2)
+            label = np.array([action[0], action[1]]).reshape(num_keypoints, 2)
+            cls = action[-1]
             self.classes.append(cls)
             label[:,0] = np.clip(label[:, 0], 0, self.img_width-1)
             label[:,1] = np.clip(label[:, 1], 0, self.img_height-1)
