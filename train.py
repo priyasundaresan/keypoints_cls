@@ -49,9 +49,10 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
 
 # dataset
 workers=0
-dataset_dir = 'real_aug_dbl_reannot'
+#dataset_dir = 'real_aug_dbl_reannot'
+dataset_dir = 'nonplanar_hulk_aug'
 output_dir = 'checkpoints'
-save_dir = os.path.join(output_dir, dataset_dir+'_GAUSS_KPTS_ONLY')
+save_dir = os.path.join(output_dir, dataset_dir)
 
 if not os.path.exists(output_dir):
     os.mkdir(output_dir)
