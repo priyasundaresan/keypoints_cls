@@ -57,10 +57,10 @@ class Prediction:
         result1 = cv2.vconcat(all_overlays[:self.num_keypoints//2])
         result2 = cv2.vconcat(all_overlays[self.num_keypoints//2:])
         result = cv2.hconcat((result1, result2))
-        #cv2.putText(result, "Right Endpoint", (10, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-        #cv2.putText(result, "Left Endpoint", (650, 490), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-        #cv2.putText(result, "Hold", (650, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-        #cv2.putText(result, "Pull", (10, 490), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        cv2.putText(result, "Right Endpoint", (10, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        cv2.putText(result, "Left Endpoint", (650, 490), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        cv2.putText(result, "Hold", (650, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        cv2.putText(result, "Pull", (10, 490), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         if cls is not None:
             label = classes[cls]
             cv2.putText(result, label, (10, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)

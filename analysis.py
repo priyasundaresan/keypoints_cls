@@ -13,10 +13,13 @@ from datetime import datetime
 from PIL import Image
 import numpy as np
 
+os.environ["CUDA_VISIBLE_DEVICES"]="2"
+
 # model
 keypoints = KeypointsGauss(NUM_KEYPOINTS, img_height=IMG_HEIGHT, img_width=IMG_WIDTH)
 #keypoints.load_state_dict(torch.load('checkpoints/nonplanar_endpts_GAUSS_KPTS_ONLY/model_2_1_6_0.005121520109637978.pth'))
-keypoints.load_state_dict(torch.load('checkpoints/nonplanar_endpts_GAUSS_KPTS_ONLY/model_2_1_10_0.005090024586942133.pth'))
+#keypoints.load_state_dict(torch.load('checkpoints/nonplanar_endpts_GAUSS_KPTS_ONLY/model_2_1_10_0.005090024586942133.pth'))
+keypoints.load_state_dict(torch.load('checkpoints/nonplanar_hulk_aug/model_2_1_24_0.004480074684978046.pth'))
 
 # cuda
 use_cuda = torch.cuda.is_available()
@@ -30,7 +33,7 @@ transform = transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-image_dir = 'data/nonplanar_endpts/test/images'
+image_dir = 'data/nonplanar_hulk_aug/test/images'
 classes = {0: "Undo", 1:"Reidemeister", 2:"Terminate"}
 for i, f in enumerate(sorted(os.listdir(image_dir))):
     img = cv2.imread(os.path.join(image_dir, f))
