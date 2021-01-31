@@ -32,7 +32,7 @@ def vis_gauss(gaussians):
     cv2.imwrite('test.png', output)
 
 class KeypointsDataset(Dataset):
-    def __init__(self, img_folder, labels_folder, num_keypoints, img_height, img_width, transform, gauss_sigma=8):
+    def __init__(self, dataset_folder, num_keypoints, img_height, img_width, transform, gauss_sigma=8):
         self.num_keypoints = num_keypoints
         self.img_height = img_height
         self.img_width = img_width
@@ -41,35 +41,37 @@ class KeypointsDataset(Dataset):
 
         self.imgs = []
         self.classes = []
-        self.labels = []
+        self.keypoints = []
+        labels_folder = os.path.join(dataset_folder, 'annots')
+        img_folder = os.path.join(dataset_folder, 'images')
         for i in range(len(os.listdir(labels_folder))):
-            action = np.load(os.path.join(labels_folder, '%05d.npy'%i))
-            label = action[:-2].reshape(num_keypoints, 2)
-            cls = sum(action[-2:])
+            label = np.load(os.path.join(labels_folder, '%05d.npy'%i), allow_pickle=True)
+            kpt = label.item().get("kpt").reshape(num_keypoints, 2)
+            cls = label.item().get("cls")
             self.classes.append(cls)
-            label[:,0] = np.clip(label[:, 0], 0, self.img_width-1)
-            label[:,1] = np.clip(label[:, 1], 0, self.img_height-1)
+            kpt[:,0] = np.clip(kpt[:, 0], 0, self.img_width-1)
+            kpt[:,1] = np.clip(kpt[:, 1], 0, self.img_height-1)
             self.imgs.append(os.path.join(img_folder, '%05d.jpg'%i))
-            self.labels.append(torch.from_numpy(label).cuda())
+            self.keypoints.append(torch.from_numpy(kpt).cuda())
 
     def __getitem__(self, index):  
         img = self.transform(Image.open(self.imgs[index]))
         cls = self.classes[index]
-        labels = self.labels[index]
-        U = labels[:,0]
-        V = labels[:,1]
+        keypoints = self.keypoints[index]
+        U = keypoints[:,0]
+        V = keypoints[:,1]
         gaussians = gauss_2d_batch(self.img_width, self.img_height, self.gauss_sigma, U, V)
         return img, gaussians, cls
     
     def __len__(self):
-        return len(self.labels)
+        return len(self.keypoints)
 
 if __name__ == '__main__':
     NUM_KEYPOINTS = 4
     IMG_WIDTH = 640
     IMG_HEIGHT = 480
-    GAUSS_SIGMA = 10
-    test_dataset = KeypointsDataset('/host/data/undo_reid_term/train/images',
-                           '/host/data/undo_reid_term/train/actions', NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
+    GAUSS_SIGMA = 8 
+    test_dataset = KeypointsDataset('/host/data/nonplanar_hulk_aug_kptcls/train', NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
     img, gaussians, cls = test_dataset[0]
+    print(img.shape, gaussians.shape, cls)
     vis_gauss(gaussians)
