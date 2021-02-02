@@ -19,7 +19,7 @@ os.environ["CUDA_VISIBLE_DEVICES"]="2"
 keypoints = KeypointsGauss(NUM_KEYPOINTS, img_height=IMG_HEIGHT, img_width=IMG_WIDTH)
 #keypoints.load_state_dict(torch.load('checkpoints/nonplanar_endpts_GAUSS_KPTS_ONLY/model_2_1_6_0.005121520109637978.pth'))
 #keypoints.load_state_dict(torch.load('checkpoints/nonplanar_endpts_GAUSS_KPTS_ONLY/model_2_1_10_0.005090024586942133.pth'))
-keypoints.load_state_dict(torch.load('checkpoints/nonplanar_hulk_aug/model_2_1_24_0.004480074684978046.pth'))
+keypoints.load_state_dict(torch.load('checkpoints/nonplanar_hulk_aug_multicolor_reannot/model_2_1_24_0.010199317085151347.pth'))
 
 # cuda
 use_cuda = torch.cuda.is_available()
