@@ -5,7 +5,7 @@ import os
 
 if __name__ == '__main__':
     dataset_dir = os.getcwd()
-    inp_img_dir = os.path.join(dataset_dir, 'images_tworope')
+    inp_img_dir = os.path.join(dataset_dir, 'images_1cable') # images_1cable or images_2cable
     output_train_dir = os.path.join(dataset_dir, 'train')
     output_train_img_dir = os.path.join(output_train_dir, 'images')
     output_val_dir = os.path.join(dataset_dir, 'test')

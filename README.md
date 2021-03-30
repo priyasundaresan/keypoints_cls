@@ -28,6 +28,33 @@ root@afc66cb0930c:/host#
 ```
 * Run `Ctrl + D` to detach out of the container
 #### Dataset Generation
+* This is best done locally, instead of on a remote host since we use a OpenCV mouse GUI to annotate images and get paired (image, keypoint) datasets. This functionality is not tested with X11 forwarding or VirtualGL.
+* We provide two sample datasets, `images_1cable` and `images_2cable` which are images of knots in single cable or multiple cable settings. 
+* Run `python gen_train_test.py` which will take the images from `images_1cable` and output 2 new folders, `train/images` and `test/images` with an 80-20 images split
+* Use the script `python annotate_real.py` which expects a folder called `images` (move `train/images` or `test/images` to the same directory level as this script). It will launch an OpenCV window where you can annotate keypoints; double click to annotate/save a point, which will be visualized as a blue circle on the image. Note that the script is currently configured to handle 4 keypoints for the right endpoint, pin, pull, and left endpoint, and will automatically go to the next image once 4 clicks are recorded. Press `s` to skip an image and `r` to clear all annotations. The script saves the images/annotations to a folder called `real_data` organized as follows:
+```
+real_data/
+|-- images
+|   `-- 00000.jpg
+|   ...
+`-- keypoints
+    `-- 00000.npy
+    ...
+```
+* Use the script `augment_real_kps.py` which expects a folder called `images` and `keypoints` (copy `real_data/images` and `real_data/keypoints` to the same directory level as this script). It will use image space and affine transformations to augment the dataset by `num_augs_per_img` and directly output the augmented images and keypoint annotations to the same `images` and `keypoints` folders
+* Finally, move `images` and `keypoints` to the folder `train`
+* Repeat the above steps on the test split
+* Move the folders  `test`  and `train` to a folder with your desired dataset name
+* This should produce a dataset like so:
+```
+<your_dataset_folder>
+|-- test
+|   |-- images
+|   `-- keypoints
+`-- train
+    |-- images
+    `-- keypoints
+```
 
 #### Training and Inference
 
