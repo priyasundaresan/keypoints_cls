@@ -12,28 +12,6 @@
 #### ["Untangling Dense Knots by Learning Task-Relevant Keypoints"](https://sites.google.com/berkeley.edu/corl2020ropeuntangling/home)
 #### Jennifer Grannen*, Priya Sundaresan*, Brijen Thananjeyan, Jeffrey Ichnowski, Ashwin Balakrishna, Minho Hwang, Vainavi Viswanath, Michael Laskey, Joseph E. Gonzalez, Ken Goldberg
 
-### Example Renderings
-<p float="left">
- <img src="https://github.com/priyasundaresan/blender-rope-sim/blob/master/images/000010_rgb.png" height="200">
- <img src="https://github.com/priyasundaresan/blender-rope-sim/blob/master/images/000015_rgb.png" height="200">
- <img src="https://github.com/priyasundaresan/blender-rope-sim/blob/master/images/000020_rgb.png" height="200">
-</p>
-<p float="left">
- <img src="https://github.com/priyasundaresan/blender-rope-sim/blob/master/images_depth/000010_rgb.png" height="200">
- <img src="https://github.com/priyasundaresan/blender-rope-sim/blob/master/images_depth/000015_rgb.png" height="200">
- <img src="https://github.com/priyasundaresan/blender-rope-sim/blob/master/images_depth/000020_rgb.png" height="200">
-</p>
-<p float="left">
- <img src="https://github.com/priyasundaresan/blender-rope-sim/blob/master/image_masks/000010_visible_mask.png" height="200">
- <img src="https://github.com/priyasundaresan/blender-rope-sim/blob/master/image_masks/000015_visible_mask.png" height="200">
- <img src="https://github.com/priyasundaresan/blender-rope-sim/blob/master/image_masks/000020_visible_mask.png" height="200">
-</p>
-<p float="left">
- <img src="https://github.com/priyasundaresan/blender-rope-sim/blob/master/annotated/000010_annotated.png" height="200">
- <img src="https://github.com/priyasundaresan/blender-rope-sim/blob/master/annotated/000015_annotated.png" height="200">
- <img src="https://github.com/priyasundaresan/blender-rope-sim/blob/master/annotated/000020_annotated.png" height="200">
-</p>
-
 ### Getting Started/Overview
 #### Repo Setup
 * Clone this repo with `https://github.com/priyasundaresan/keypoints_cls.git` and switch to the `develop` branch with `git checkout --track origin/develop`
@@ -43,13 +21,14 @@
 priya-keypoints                      latest                          735686b1cd81        2 months ago        5.17GB
 ```
 * Next, we will set up some directories for storing checkpoints and datasets. In the directory in which you cloned this repo, run `mkdir checkpoints`.  Then, make a folder in which you want to store datasets; it can be anywhere on your machine, but note the path to this directory.
-* Configure the script `docker/docker_run.py` replacing `'/raid/priya/data/keypoints/datasets` with the path to the folder you just created
+* Configure the script `docker/docker_run.py` replacing `/raid/priya/data/keypoints/datasets` with the path to the folder you just created
 * Check that you can launch a Docker container from the image you created; `cd docker` and run `./docker_run.py` which should open a container with a prompt like:
 ```
 root@afc66cb0930c:/host#
 ```
 * Run `Ctrl + D` to detach out of the container
 #### Dataset Generation
+
 #### Training and Inference
 
 ### Contributing 
