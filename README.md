@@ -47,7 +47,7 @@ real_data/
 * Move the folders  `test`  and `train` to a folder with your desired dataset name
 * This should produce a dataset like so:
 ```
-<your_dataset_folder>
+<your_dataset_name>
 |-- test
 |   |-- images
 |   `-- keypoints
@@ -57,6 +57,12 @@ real_data/
 ```
 
 #### Training and Inference
+* Start a docker container (if not already done) with `cd docker && ./docker_run.py`
+* Configure `train.py` by replacing `dataset_dir = 'nonplanar_hulk_aug_multicolor_reannot_looser_moredbl'` with `<your_dataset_name>`
+* Run `python train.py`
+* This will save checkpoints to `checkpoints/<your_dataset_name>`
+* Update `analysis.py` by with `keypoints.load_state_dict(torch.load('checkpoints/<your_dataset_name>/model_2_1_24_<final_test_loss>.pth'))`
+* Run `python analysis.py` which will save predicted heatmap keypoint predictions to `preds`
 
 ### Contributing 
-* If you have any features you'd like to see added or would like to contribute yourself, please let us know by contacting [Priya Sundaresan](http://priya.sundaresan.us) at priya.sundaresan@berkeley.edu or [Jennifer Grannen](http://jenngrannen.com/) at jenngrannen@berkeley.edu
+* For any questions, contact [Priya Sundaresan](http://priya.sundaresan.us) at priya.sundaresan@berkeley.edu or [Jennifer Grannen](http://jenngrannen.com/) at jenngrannen@berkeley.edu

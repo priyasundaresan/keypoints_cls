@@ -13,50 +13,43 @@ from src.dataset import KeypointsDataset, transform
 MSE = torch.nn.MSELoss()
 bceLoss = nn.BCELoss
 
-os.environ["CUDA_VISIBLE_DEVICES"]="2"
+os.environ["CUDA_VISIBLE_DEVICES"]="4"
 
 def forward(sample_batched, model):
-    img, cls = sample_batched
+    img, gt_gauss = sample_batched
     img = Variable(img.cuda() if use_cuda else img)
-    pred_cls = model.forward(img).double()
-    loss = nn.BCEWithLogitsLoss()(pred_cls, cls.double())
-    pred = torch.round(torch.sigmoid(pred_cls))
-    cls_correct = torch.sum(pred.long() == cls.long().cuda()).item()
-    return loss, cls_correct
+    pred_gauss = model.forward(img).double()
+    #pred_gauss = pred_gauss.view(pred_gauss.shape[0], 4, 640*480).double()
+    #gt_gauss += 1e-300
+    #loss = F.kl_div(gt_gauss.cuda().log(), pred_gauss, None, None, 'mean')
+    loss = nn.BCELoss()(pred_gauss, gt_gauss)
+    return loss
 
 def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
     for epoch in range(epochs):
 
         train_loss = 0.0
-        total_correct = 0
-        total = 0
         for i_batch, sample_batched in enumerate(train_data):
             optimizer.zero_grad()
-            loss, correct = forward(sample_batched, model)
-            total_correct += correct
-            total += batch_size
+            loss = forward(sample_batched, model)
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
             print('[%d, %5d] loss: %.3f' % (epoch + 1, i_batch + 1, loss.item()), end='')
             print('\r', end='')
-        print('train loss:', train_loss / i_batch, "train accuracy", total_correct/total)
+        print('train loss:', train_loss / i_batch)
         
         test_loss = 0.0
-        total_correct = 0
-        total = 0
         for i_batch, sample_batched in enumerate(test_data):
-            loss,  correct = forward(sample_batched, model)
-            total_correct += correct
-            total += batch_size
+            loss = forward(sample_batched, model)
             test_loss += loss.item()
-        print('test loss:', test_loss / i_batch, "test accuracy", total_correct/total)
+        print('test loss:', test_loss / i_batch)
         if epoch%2 == 0:
             torch.save(keypoints.state_dict(), checkpoint_path + '/model_2_1_' + str(epoch) + '_' + str(test_loss/i_batch) + '.pth')
 
 # dataset
 workers=0
-dataset_dir = 'hulk_cls'
+dataset_dir = 'nonplanar_hulk_aug_multicolor_reannot_looser_moredbl'
 output_dir = 'checkpoints'
 save_dir = os.path.join(output_dir, dataset_dir)
 
@@ -65,10 +58,12 @@ if not os.path.exists(output_dir):
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
-train_dataset = KeypointsDataset('/host/data/%s/train'%dataset_dir, transform)
+train_dataset = KeypointsDataset('data/%s/train/images'%dataset_dir,
+                           'data/%s/train/keypoints'%dataset_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
 train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
 
-test_dataset = KeypointsDataset('/host/data/%s/test'%dataset_dir, transform)
+test_dataset = KeypointsDataset('data/%s/test/images'%dataset_dir,
+                           'data/%s/test/keypoints'%dataset_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
 test_data = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
 
 use_cuda = torch.cuda.is_available()

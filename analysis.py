@@ -35,6 +35,8 @@ transform = transform = transforms.Compose([
 
 image_dir = 'data/nonplanar_hulk_aug/test/images'
 classes = {0: "Undo", 1:"Reidemeister", 2:"Terminate"}
+if not os.path.exists('preds'):
+    os.mkdir('preds')
 for i, f in enumerate(sorted(os.listdir(image_dir))):
     img = cv2.imread(os.path.join(image_dir, f))
     print(img.shape)
