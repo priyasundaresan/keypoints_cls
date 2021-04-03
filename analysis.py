@@ -12,7 +12,7 @@ from datetime import datetime
 from PIL import Image
 import numpy as np
 
-os.environ["CUDA_VISIBLE_DEVICES"]="4"
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 # model
 keypoints = KeypointsGauss(NUM_KEYPOINTS, img_height=IMG_HEIGHT, img_width=IMG_WIDTH)
@@ -32,8 +32,8 @@ transform = transform = transforms.Compose([
 ])
 
 #image_dir = 'data/overhead_hairtie_random_resized_larger'
-image_dir = 'data/nonplanar-hulk-conditioned-aug/test/images'
-#image_dir = 'data/hairtie_overcrossing_resized_masks'
+#image_dir = 'data/nonplanar-hulk-conditioned-aug/test/images'
+image_dir = 'data/texas_granny_bowline'
 #image_dir = 'data/overhead_hairtie_resized_masks'
 
 data_dir = "non_cond_label_test"
@@ -45,5 +45,8 @@ for i, f in enumerate(test_data):
     img_t = f[0]
     # GAUSS
     heatmap = prediction.predict(img_t)
-    heatmap = heatmap.detach().cpu().numpy()
+    if use_cuda:
+        heatmap = heatmap.detach().cpu().numpy()
+    else:    
+        heatmap = heatmap.numpy()
     prediction.plot(img_t.detach().cpu().numpy(), heatmap, image_id=i)
