@@ -26,9 +26,9 @@ root@afc66cb0930c:/host#
 #### Dataset Generation
 * This is best done locally, instead of on a remote host since we use a OpenCV mouse GUI to annotate images and get paired (image, keypoint) datasets. This functionality is not tested with X11 forwarding or VirtualGL.
 * We provide a sample dataset, `condition_endpoint_cable`, which contains images of knots in single cable along with its annotations for the given endpoint keypoint (either right or left), and the associated pin and pull keypoints. 
-* Use the script `python annotate_real.py` which expects a folder called `images` (move `train/images` or `test/images` to the same directory level as this script). It will launch an OpenCV window where you can annotate keypoints; double click to annotate/save a point, which will be visualized as a blue circle on the image. Note that the script is currently configured to handle 4 keypoints for the right endpoint, pin, pull, and left endpoint, and will automatically go to the next image once 4 clicks are recorded. Press `s` to skip an image and `r` to clear all annotations. The script saves the images/annotations to a folder called `real_data` organized as follows:
+* Use the script `python annotate_real.py` which expects a folder called `images` (move `train/images` or `test/images` to the same directory level as this script). It will launch an OpenCV window where you can annotate keypoints; double click to annotate/save a point, which will be visualized as a blue circle on the image. Note that the script will simply save the keypoints you label into an npy file. The dataloader will construct the heatmaps for the conditioned keypoints to pass into the model as it is faster to do this on a GPU. You will have to update the code for the number of keypoints being saved and which keypoints are used as givens. Press `s` to skip an image and `r` to clear all annotations. The script saves the images/annotations to a folder organized as follows:
 ```
-real_data/
+{folder_name}/
 |-- images
 |   `-- 00000.jpg
 |   ...
@@ -36,7 +36,7 @@ real_data/
     `-- 00000.npy
     ...
 ```
-* Use the script `real_kp_augment.py` which expects a folder called `images` and `annots` (copy `real_data/images` and `real_data/annots` to the same directory level as this script). It will use image space and affine transformations to augment the dataset by `num_augs_per_img` and directly output the augmented images and keypoint annotations to the same `images` and `keypoints` folders
+* Use the script `real_kp_augment.py` which expects a folder called `images` and `annots` (copy `{folder_name}/images` and `{folder_name}/annots` to the same directory level as this script). It will use image space and affine transformations to augment the dataset by `num_augs_per_img` and directly output the augmented images and keypoint annotations to the same `images` and `keypoints` folders
 * Finally, move `images` and `annots` to the folder `train`
 * Repeat the above steps on the test split
 * Move the folders  `test`  and `train` to a folder with your desired dataset name
