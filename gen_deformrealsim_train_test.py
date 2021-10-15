@@ -15,7 +15,7 @@ if __name__ == '__main__':
             os.mkdir(d)
 
     listOfFiles = list()
-    inp_img_dirs = [os.path.join('data', 'sim_trajs', 'data_wiping_v4')]
+    inp_img_dirs = [os.path.join('datasets', 'sim_trajs', 'data_winding_v4')]
     for d in inp_img_dirs:
         for (dirpath, dirnames, filenames) in os.walk(d):
             fnames = [os.path.join(dirpath, file) for file in filenames]

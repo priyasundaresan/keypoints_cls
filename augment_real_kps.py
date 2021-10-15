@@ -32,21 +32,21 @@ sometimes = lambda aug: iaa.Sometimes(0.5, aug)
 #    ]
 
 KPT_AUGS = [ 
-    iaa.LinearContrast((0.95, 1.05), per_channel=0.25), 
-    iaa.Add((-10, 10), per_channel=False),
-    iaa.GammaContrast((0.95, 1.05)),
+    iaa.LinearContrast((0.75, 1.25), per_channel=0.25), 
+    iaa.Add((-20, 20), per_channel=False),
+    iaa.GammaContrast((0.85, 1.15)),
     iaa.GaussianBlur(sigma=(0.0, 0.6)),
-    iaa.MultiplySaturation((0.95, 1.05)),
+    iaa.MultiplySaturation((0.85, 1.15)),
     iaa.AdditiveGaussianNoise(scale=(0, 0.0125*255)),
-    iaa.flip.Flipud(0.5),
+    #iaa.flip.Flipud(0.5),
     sometimes(iaa.Affine(
-                scale={"x": (1.0, 1.2), "y": (1.0, 1.2)}, # scale images to 80-120% of their size, individually per axis
+                scale={"x": (0.8, 1.3), "y": (0.7, 1.2)}, # scale images to 80-120% of their size, individually per axis
                 translate_percent={"x": (-0.08, 0.08), "y": (-0.08, 0.08)}, # translate by -20 to +20 percent (per axis)
-                rotate=(-15, 15), # rotate by -45 to +45 degrees
-                shear=(-8, 8), # shear by -16 to +16 degrees
+                rotate=(-5, 5), # rotate by -45 to +45 degrees
+                shear=(-5, 5), # shear by -16 to +16 degrees
                 order=[0, 1], # use nearest neighbour or bilinear interpolation (fast)
-                cval=(0, 20), # if mode is constant, use a cval between 0 and 255
-                mode=['constant',  'edge']
+                cval=(100,150), # if mode is constant, use a cval between 0 and 255
+                mode=['constant']
                 #mode=ia.ALL # use any of scikit-image's warping modes (see 2nd image from the top for examples)
             ))
     ]
@@ -63,7 +63,7 @@ def augment(img, keypoints, img_dir, output_keypoints_dir, new_idx, show=False):
     #kps_aug = list(kps_aug)
     #kps_aug =  np.array(kps_aug)
     #kps_aug = np.array(kps_aug.to_list() + [cls])
-    for i, (u,v) in enumerate(kps_aug[:-1]):
+    for i, (u,v) in enumerate(kps_aug):
         (r, g, b) = colorsys.hsv_to_rgb(float(i)/keypoints.shape[0], 1.0, 1.0)
         R, G, B = int(255 * r), int(255 * g), int(255 * b)
         cv2.circle(vis_img_aug,(u,v),4,(R,G,B), -1)

@@ -13,7 +13,8 @@ class KeypointsAnnotator:
 
     def mouse_callback(self, event, x, y, flags, param):
         cv2.imshow("pixel_selector", self.vis)
-        if event == cv2.EVENT_LBUTTONDBLCLK:
+        #if event == cv2.EVENT_LBUTTONDBLCLK:
+        if event == cv2.EVENT_LBUTTONDOWN:
             #cv2.putText(img, self.click_to_kpt[len(self.clicks)], (x,y-30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255),2)
             self.clicks.append([x, y])
             cv2.circle(self.vis, (x, y), 3, (255, 0, 0), -1)

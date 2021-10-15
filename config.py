@@ -1,6 +1,6 @@
 NUM_KEYPOINTS = 4
-IMG_HEIGHT  = 480
-IMG_WIDTH   = 640
-GAUSS_SIGMA = 8
-epochs = 25
+IMG_HEIGHT  = 320
+IMG_WIDTH   = 320
+GAUSS_SIGMA = 6
+epochs = 20
 batch_size = 4

@@ -10,10 +10,11 @@ from torch.utils.data import DataLoader
 from config import *
 from src.model import KeypointsGauss
 from src.dataset import KeypointsDataset, transform
+
 MSE = torch.nn.MSELoss()
 bceLoss = nn.BCELoss
 
-os.environ["CUDA_VISIBLE_DEVICES"]="4"
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 def forward(sample_batched, model):
     img, gt_gauss = sample_batched
@@ -49,7 +50,7 @@ def fit(train_data, test_data, model, epochs, checkpoint_path = ''):
 
 # dataset
 workers=0
-dataset_dir = 'nonplanar_hulk_aug_multicolor_reannot_looser_moredbl'
+dataset_dir = 'winding'
 output_dir = 'checkpoints'
 save_dir = os.path.join(output_dir, dataset_dir)
 
@@ -58,12 +59,12 @@ if not os.path.exists(output_dir):
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
-train_dataset = KeypointsDataset('data/%s/train/images'%dataset_dir,
-                           'data/%s/train/keypoints'%dataset_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
+train_dataset = KeypointsDataset('/host/data/%s/train/images'%dataset_dir,
+                           '/host/data/%s/train/keypoints'%dataset_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
 train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
 
-test_dataset = KeypointsDataset('data/%s/test/images'%dataset_dir,
-                           'data/%s/test/keypoints'%dataset_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
+test_dataset = KeypointsDataset('/host/data/%s/test/images'%dataset_dir,
+                           '/host/data/%s/test/keypoints'%dataset_dir, NUM_KEYPOINTS, IMG_HEIGHT, IMG_WIDTH, transform, gauss_sigma=GAUSS_SIGMA)
 test_data = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
 
 use_cuda = torch.cuda.is_available()
@@ -79,4 +80,5 @@ keypoints = KeypointsGauss(NUM_KEYPOINTS, img_height=IMG_HEIGHT, img_width=IMG_W
 optimizer = optim.Adam(keypoints.parameters(), lr=1.0e-4, weight_decay=1.0e-4)
 #optimizer = optim.Adam(keypoints.parameters(), lr=0.0001)
 
+print('here')
 fit(train_data, test_data, keypoints, epochs=epochs, checkpoint_path=save_dir)

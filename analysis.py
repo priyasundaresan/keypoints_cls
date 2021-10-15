@@ -13,13 +13,13 @@ from datetime import datetime
 from PIL import Image
 import numpy as np
 
-os.environ["CUDA_VISIBLE_DEVICES"]="2"
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 # model
 keypoints = KeypointsGauss(NUM_KEYPOINTS, img_height=IMG_HEIGHT, img_width=IMG_WIDTH)
 #keypoints.load_state_dict(torch.load('checkpoints/nonplanar_endpts_GAUSS_KPTS_ONLY/model_2_1_6_0.005121520109637978.pth'))
 #keypoints.load_state_dict(torch.load('checkpoints/nonplanar_endpts_GAUSS_KPTS_ONLY/model_2_1_10_0.005090024586942133.pth'))
-keypoints.load_state_dict(torch.load('checkpoints/nonplanar_hulk_aug_multicolor_reannot/model_2_1_24_0.010199317085151347.pth'))
+keypoints.load_state_dict(torch.load('checkpoints/wiping/model_2_1_14_0.005068135043186103.pth'))
 
 # cuda
 use_cuda = torch.cuda.is_available()
@@ -33,21 +33,14 @@ transform = transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-image_dir = 'data/nonplanar_hulk_aug/test/images'
-classes = {0: "Undo", 1:"Reidemeister", 2:"Terminate"}
+image_dir = 'data/wiping/test/images'
 if not os.path.exists('preds'):
     os.mkdir('preds')
 for i, f in enumerate(sorted(os.listdir(image_dir))):
     img = cv2.imread(os.path.join(image_dir, f))
-    print(img.shape)
     img_t = transform(img)
     img_t = img_t.cuda()
     # GAUSS
     heatmap = prediction.predict(img_t)
     heatmap = heatmap.detach().cpu().numpy()
-    prediction.plot(img, heatmap, image_id=i)
- 
-    #heatmap, cls = prediction.predict(img_t)
-    #cls = torch.argmax(cls).item()
-    #heatmap = heatmap.detach().cpu().numpy()
-    #prediction.plot(img, heatmap, image_id=i, cls=cls, classes=classes)
+    prediction.plot_combined(img, heatmap, image_id=i)
